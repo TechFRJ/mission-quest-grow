@@ -2,95 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Gamified Productivity App - Notion-inspired Design System */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
+    /* Core backgrounds */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 9%;
+    
+    /* Cards & surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --card-foreground: 0 0% 9%;
+    
+    /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
+    --popover-foreground: 0 0% 9%;
+    
+    /* Primary - Warm Amber for gamification energy */
+    --primary: 38 92% 50%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary - Soft neutral */
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    
+    /* Muted */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    
+    /* Accent - Blue for info */
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Success - Green for completions */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    /* EXP purple glow */
+    --exp: 265 83% 57%;
+    --exp-foreground: 0 0% 100%;
+    
+    /* Coin gold */
+    --coin: 45 93% 47%;
+    --coin-foreground: 0 0% 9%;
+    
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders & inputs */
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 38 92% 50%;
+    
+    --radius: 0.75rem;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.07), 0 2px 4px -2px hsl(0 0% 0% / 0.07);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.08), 0 4px 6px -4px hsl(0 0% 0% / 0.08);
+    
+    /* Sidebar (keeping for compatibility) */
     --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-foreground: 0 0% 9%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 38 92% 50%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --background: 0 0% 7%;
+    --foreground: 0 0% 98%;
+    
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 38 92% 50%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
+    
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    --exp: 265 83% 57%;
+    --exp-foreground: 0 0% 100%;
+    
+    --coin: 45 93% 47%;
+    --coin-foreground: 0 0% 9%;
+    
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 38 92% 50%;
+    
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 38 92% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 38 92% 50%;
   }
 }
 
@@ -98,8 +128,143 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
+  
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+@layer components {
+  /* Mission card styles */
+  .mission-card {
+    @apply bg-card rounded-xl p-4 transition-all duration-200;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .mission-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+  
+  .mission-card.completed {
+    @apply opacity-60;
+  }
+  
+  /* Progress bar */
+  .progress-bar {
+    @apply h-2 rounded-full bg-secondary overflow-hidden;
+  }
+  
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+    background: linear-gradient(90deg, hsl(var(--exp)), hsl(var(--primary)));
+  }
+  
+  /* Stat badge */
+  .stat-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium;
+  }
+  
+  .stat-badge.exp {
+    @apply bg-exp/10 text-exp;
+  }
+  
+  .stat-badge.coin {
+    @apply bg-coin/10;
+    color: hsl(var(--coin));
+  }
+  
+  .stat-badge.level {
+    @apply bg-primary/10 text-primary;
+  }
+  
+  /* Bottom nav */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-card border-t border-border;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -4px 6px -1px hsl(0 0% 0% / 0.05);
+  }
+  
+  .nav-item {
+    @apply flex flex-col items-center justify-center py-2 px-4 text-muted-foreground transition-colors;
+  }
+  
+  .nav-item.active {
+    @apply text-primary;
+  }
+  
+  /* Level up animation */
+  @keyframes level-up {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  
+  .level-up-animation {
+    animation: level-up 0.5s ease-out;
+  }
+  
+  /* Coin animation */
+  @keyframes coin-earned {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-20px) scale(1.2); opacity: 0; }
+  }
+  
+  .coin-animation {
+    animation: coin-earned 0.6s ease-out forwards;
+  }
+  
+  /* Success pulse */
+  @keyframes success-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--success) / 0.4); }
+    50% { box-shadow: 0 0 0 10px hsl(var(--success) / 0); }
+  }
+  
+  .success-pulse {
+    animation: success-pulse 0.5s ease-out;
+  }
+  
+  /* Fade in animation */
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fade-in-up {
+    animation: fade-in-up 0.3s ease-out forwards;
+  }
+  
+  /* Staggered children animation */
+  .stagger-children > * {
+    opacity: 0;
+    animation: fade-in-up 0.3s ease-out forwards;
+  }
+  
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+  .stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+  .stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+}
+
+/* Safe area for mobile */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
   }
 }
