@@ -53,8 +53,9 @@ export function CreateMissionModal({ onClose, editMission }: CreateMissionModalP
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in">
-      <div className="bg-card rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-elevated animate-slide-up">
-        <div className="sticky top-0 bg-card border-b border-border p-4 flex items-center justify-between">
+      <div className="bg-card rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[90vh] shadow-elevated animate-slide-up flex flex-col safe-area-inset-bottom">
+        {/* Fixed Header */}
+        <div className="flex-shrink-0 border-b border-border p-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">
             {editMission ? 'Editar Missão' : 'Nova Missão'}
           </h2>
@@ -63,135 +64,141 @@ export function CreateMissionModal({ onClose, editMission }: CreateMissionModalP
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Estudar 1 hora"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="category">Categoria</Label>
-            <Input
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="Ex: Estudos, Saúde, Trabalho"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Tipo</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setType('normal')}
-                className={cn(
-                  'p-3 rounded-lg border-2 text-center transition-all',
-                  type === 'normal'
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-border hover:border-primary/50'
-                )}
-              >
-                <div className="font-medium">Normal</div>
-                <div className="text-xs text-muted-foreground">Uma vez</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setType('daily')}
-                className={cn(
-                  'p-3 rounded-lg border-2 text-center transition-all',
-                  type === 'daily'
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-border hover:border-primary/50'
-                )}
-              >
-                <div className="font-medium">Diária</div>
-                <div className="text-xs text-muted-foreground">Repete</div>
-              </button>
-            </div>
-          </div>
-
-          {type === 'daily' && (
+        {/* Scrollable Content */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4 space-y-5">
             <div className="space-y-2">
-              <Label>Dias válidos</Label>
-              <div className="flex gap-1">
-                {DAY_NAMES.map((day, index) => (
+              <Label htmlFor="title">Título</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Estudar 1 hora"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">Categoria</Label>
+              <Input
+                id="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Ex: Estudos, Saúde, Trabalho"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tipo</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setType('normal')}
+                  className={cn(
+                    'p-3 rounded-lg border-2 text-center transition-all',
+                    type === 'normal'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-border hover:border-primary/50'
+                  )}
+                >
+                  <div className="font-medium">Normal</div>
+                  <div className="text-xs text-muted-foreground">Uma vez</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setType('daily')}
+                  className={cn(
+                    'p-3 rounded-lg border-2 text-center transition-all',
+                    type === 'daily'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-border hover:border-primary/50'
+                  )}
+                >
+                  <div className="font-medium">Diária</div>
+                  <div className="text-xs text-muted-foreground">Repete</div>
+                </button>
+              </div>
+            </div>
+
+            {type === 'daily' && (
+              <div className="space-y-2">
+                <Label>Dias válidos</Label>
+                <div className="flex gap-1">
+                  {DAY_NAMES.map((day, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => toggleDay(index)}
+                      className={cn(
+                        'flex-1 py-2 rounded-lg text-sm font-medium transition-all',
+                        validDays.includes(index)
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                      )}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>EXP</Label>
+                <div className="flex items-center gap-2">
                   <button
-                    key={index}
                     type="button"
-                    onClick={() => toggleDay(index)}
-                    className={cn(
-                      'flex-1 py-2 rounded-lg text-sm font-medium transition-all',
-                      validDays.includes(index)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
-                    )}
+                    onClick={() => setExp(Math.max(5, exp - 5))}
+                    className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
                   >
-                    {day}
+                    <Minus className="w-4 h-4" />
                   </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>EXP</Label>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setExp(Math.max(5, exp - 5))}
-                  className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <div className="flex-1 text-center">
-                  <span className="text-2xl font-bold text-exp">{exp}</span>
+                  <div className="flex-1 text-center">
+                    <span className="text-2xl font-bold text-exp">{exp}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setExp(exp + 5)}
+                    className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setExp(exp + 5)}
-                  className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label>Moedas</Label>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCoins(Math.max(0, coins - 5))}
-                  className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <div className="flex-1 text-center">
-                  <span className="text-2xl font-bold text-coin">{coins}</span>
+              <div className="space-y-2">
+                <Label>Moedas</Label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCoins(Math.max(0, coins - 5))}
+                    className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <div className="flex-1 text-center">
+                    <span className="text-2xl font-bold text-coin">{coins}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCoins(coins + 5)}
+                    className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setCoins(coins + 5)}
-                  className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
               </div>
             </div>
           </div>
 
-          <Button type="submit" className="w-full" size="lg">
-            {editMission ? 'Salvar Alterações' : 'Criar Missão'}
-          </Button>
+          {/* Fixed Footer */}
+          <div className="flex-shrink-0 border-t border-border p-4 bg-card">
+            <Button type="submit" className="w-full" size="lg">
+              {editMission ? 'Salvar Alterações' : 'Criar Missão'}
+            </Button>
+          </div>
         </form>
       </div>
     </div>

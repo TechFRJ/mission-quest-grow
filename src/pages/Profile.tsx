@@ -1,22 +1,106 @@
-import { User, Sparkles, Coins, Target, Trophy, Calendar, History, Gift } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { User, Sparkles, Coins, Target, Trophy, Calendar, History, Gift, Camera, LogOut } from 'lucide-react';
 import { useGame } from '@/contexts/GameContext';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { getMissions } from '@/lib/storage';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 export function Profile() {
   const { stats } = useGame();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
   const missions = getMissions();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const progressPercent = Math.min((stats.currentExp / stats.expToNext) * 100, 100);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/avatar.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setAvatarUrl(data.publicUrl + '?t=' + Date.now());
+
+      // Update profile with avatar URL
+      await supabase
+        .from('profiles')
+        .update({ avatar_url: data.publicUrl })
+        .eq('user_id', user.id);
+
+      toast({ title: 'Foto atualizada com sucesso!' });
+    } catch (error: any) {
+      toast({ title: 'Erro ao atualizar foto', description: error.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Aventureiro';
 
   return (
     <div className="min-h-screen pb-safe">
       <main className="container px-4 py-6 space-y-6">
         {/* Profile Header */}
         <div className="bg-card rounded-xl p-6 shadow-soft text-center">
-          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <User className="w-10 h-10 text-primary" />
+          <div 
+            className="relative w-20 h-20 mx-auto mb-4 cursor-pointer group"
+            onClick={handleAvatarClick}
+          >
+            {avatarUrl ? (
+              <img 
+                src={avatarUrl} 
+                alt="Avatar" 
+                className="w-20 h-20 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="w-10 h-10 text-primary" />
+              </div>
+            )}
+            <div className="absolute inset-0 rounded-full bg-foreground/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <Camera className="w-6 h-6 text-background" />
+            </div>
+            {uploading && (
+              <div className="absolute inset-0 rounded-full bg-foreground/50 flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-background border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
           </div>
-          <h1 className="text-xl font-bold text-foreground mb-1">Aventureiro</h1>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <h1 className="text-xl font-bold text-foreground mb-1">{userName}</h1>
+          <p className="text-sm text-muted-foreground mb-2">{user?.email}</p>
           <div className="stat-badge level mx-auto">
             <Sparkles className="w-4 h-4" />
             <span>Nível {stats.level}</span>
@@ -134,6 +218,16 @@ export function Profile() {
             </div>
           </div>
         )}
+
+        {/* Sign Out Button */}
+        <Button 
+          variant="outline" 
+          className="w-full" 
+          onClick={handleSignOut}
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sair da Conta
+        </Button>
       </main>
     </div>
   );

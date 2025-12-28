@@ -21,11 +21,11 @@ export function LevelUpModal({ level, onClose }: LevelUpModalProps) {
 
   return (
     <div className={cn(
-      'fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm transition-opacity duration-300',
+      'fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm transition-opacity duration-300 safe-area-inset-bottom',
       isVisible ? 'opacity-100' : 'opacity-0'
     )}>
       <div className={cn(
-        'bg-card rounded-2xl p-8 text-center shadow-elevated max-w-sm mx-4 transition-all duration-300',
+        'bg-card rounded-2xl p-8 text-center shadow-elevated max-w-sm mx-4 transition-all duration-300 relative',
         isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0'
       )}>
         <button
