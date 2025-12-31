@@ -21,7 +21,7 @@ export function LevelUpModal({ level, onClose }: LevelUpModalProps) {
 
   return (
     <div className={cn(
-      'fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm transition-opacity duration-300 safe-area-inset-bottom',
+      'fixed inset-0 z-[1000] flex items-center justify-center bg-foreground/20 backdrop-blur-sm transition-opacity duration-300 safe-area-inset-bottom',
       isVisible ? 'opacity-100' : 'opacity-0'
     )}>
       <div className={cn(
