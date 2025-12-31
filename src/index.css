@@ -4,6 +4,17 @@
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Modal utilities (mobile-first) */
+.modal-footer-safe {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+.modal-body-safe {
+  /* reserve space so the last field never sits behind the fixed footer */
+  padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+}
+
 @tailwind components;
 @tailwind utilities;
 
