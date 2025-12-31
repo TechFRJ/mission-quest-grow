@@ -27,50 +27,52 @@ export function CreateRewardModal({ onClose }: CreateRewardModalProps) {
   };
 
   return (
-    <ModalShell
-      title="Nova Recompensa"
-      onClose={onClose}
-      footer={
-        <Button type="submit" className="w-full" size="lg">
-          Salvar Recompensa
-        </Button>
-      }
-    >
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="name">Nome da Recompensa</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ex: 1 hora de videogame"
-            required
-          />
-        </div>
+    <form onSubmit={handleSubmit}>
+      <ModalShell
+        title="Nova Recompensa"
+        onClose={onClose}
+        footer={
+          <Button type="submit" className="w-full" size="lg">
+            Salvar Recompensa
+          </Button>
+        }
+      >
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome da Recompensa</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: 1 hora de videogame"
+              required
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label>Custo em Moedas</Label>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setCost(Math.max(5, cost - 10))}
-              className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
-            >
-              <Minus className="w-5 h-5" />
-            </button>
-            <div className="flex-1 text-center">
-              <span className="text-4xl font-bold text-coin">{cost}</span>
+          <div className="space-y-2">
+            <Label>Custo em Moedas</Label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setCost(Math.max(5, cost - 10))}
+                className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
+              >
+                <Minus className="w-5 h-5" />
+              </button>
+              <div className="flex-1 text-center">
+                <span className="text-4xl font-bold text-coin">{cost}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCost(cost + 10)}
+                className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setCost(cost + 10)}
-              className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
           </div>
         </div>
-      </form>
-    </ModalShell>
+      </ModalShell>
+    </form>
   );
 }
