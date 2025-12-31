@@ -58,7 +58,10 @@ export function CreateMissionModal({ onClose, editMission }: CreateMissionModalP
       onClose={onClose}
       footer={
         <Button type="submit" className="w-full" size="lg">
-          {editMission ? 'Salvar Alterações' : 'Criar Missão'}
+          {editMission 
+            ? (type === 'daily' ? 'Atualizar Missão Diária' : 'Atualizar Missão')
+            : (type === 'daily' ? 'Salvar Missão Diária' : 'Salvar Missão')
+          }
         </Button>
       }
     >
