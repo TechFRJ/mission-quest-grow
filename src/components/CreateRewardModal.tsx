@@ -32,7 +32,7 @@ export function CreateRewardModal({ onClose }: CreateRewardModalProps) {
       onClose={onClose}
       footer={
         <Button type="submit" className="w-full" size="lg">
-          Adicionar Recompensa
+          Salvar Recompensa
         </Button>
       }
     >
