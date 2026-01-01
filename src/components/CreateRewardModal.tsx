@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Loader2 } from 'lucide-react';
 import { useGame } from '@/contexts/GameContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,16 +14,23 @@ export function CreateRewardModal({ onClose }: CreateRewardModalProps) {
   const { addReward } = useGame();
   const [name, setName] = useState('');
   const [cost, setCost] = useState(50);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || isSubmitting) return;
 
-    addReward({
-      name: name.trim(),
-      cost,
-    });
-    onClose();
+    setIsSubmitting(true);
+    
+    try {
+      await addReward({
+        name: name.trim(),
+        cost,
+      });
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -32,8 +39,20 @@ export function CreateRewardModal({ onClose }: CreateRewardModalProps) {
         title="Nova Recompensa"
         onClose={onClose}
         footer={
-          <Button type="submit" className="w-full" size="lg">
-            Salvar Recompensa
+          <Button 
+            type="submit" 
+            className="w-full" 
+            size="lg"
+            disabled={!name.trim() || isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              'Salvar Recompensa'
+            )}
           </Button>
         }
       >
