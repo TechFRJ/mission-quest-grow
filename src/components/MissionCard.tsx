@@ -1,5 +1,5 @@
 import { Check, Coins, Sparkles, Tag } from 'lucide-react';
-import { Mission } from '@/lib/storage';
+import { Mission } from '@/contexts/GameContext';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
@@ -69,7 +69,7 @@ export function MissionCard({ mission, onComplete, showCompleteButton = true, co
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
         <div className="flex items-center gap-1 text-exp">
           <Sparkles className="w-4 h-4" />
-          <span className="font-semibold text-sm">+{mission.exp}</span>
+          <span className="font-semibold text-sm">+{mission.xp}</span>
         </div>
         {mission.coins > 0 && (
           <div className="flex items-center gap-1 text-coin">

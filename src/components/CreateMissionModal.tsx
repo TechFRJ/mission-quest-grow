@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Plus, Minus } from 'lucide-react';
-import { useGame } from '@/contexts/GameContext';
-import { DAY_NAMES, Mission } from '@/lib/storage';
+import { Plus, Minus, Loader2 } from 'lucide-react';
+import { useGame, Mission, DAY_NAMES } from '@/contexts/GameContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,29 +18,36 @@ export function CreateMissionModal({ onClose, editMission }: CreateMissionModalP
   const [category, setCategory] = useState(editMission?.category || '');
   const [type, setType] = useState<'normal' | 'daily'>(editMission?.type || 'normal');
   const [validDays, setValidDays] = useState<number[]>(editMission?.validDays || [0, 1, 2, 3, 4, 5, 6]);
-  const [exp, setExp] = useState(editMission?.exp || 25);
+  const [exp, setExp] = useState(editMission?.xp || 25);
   const [coins, setCoins] = useState(editMission?.coins || 10);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !category.trim()) return;
+    if (!title.trim() || !category.trim() || isSubmitting) return;
 
-    const missionData = {
-      title: title.trim(),
-      category: category.trim(),
-      type,
-      validDays: type === 'daily' ? validDays : [],
-      exp,
-      coins,
-      active: true,
-    };
+    setIsSubmitting(true);
+    
+    try {
+      const missionData = {
+        title: title.trim(),
+        category: category.trim(),
+        type,
+        validDays: type === 'daily' ? validDays : [],
+        xp: exp,
+        coins,
+        active: true,
+      };
 
-    if (editMission) {
-      updateMission(editMission.id, missionData);
-    } else {
-      addMission(missionData);
+      if (editMission) {
+        await updateMission(editMission.id, missionData);
+      } else {
+        await addMission(missionData);
+      }
+      onClose();
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
 
   const toggleDay = (day: number) => {
@@ -58,8 +64,18 @@ export function CreateMissionModal({ onClose, editMission }: CreateMissionModalP
         title={editMission ? 'Editar Missão' : 'Nova Missão'}
         onClose={onClose}
         footer={
-          <Button type="submit" className="w-full" size="lg">
-            {editMission 
+          <Button 
+            type="submit" 
+            className="w-full" 
+            size="lg"
+            disabled={!title.trim() || !category.trim() || isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : editMission 
               ? (type === 'daily' ? 'Atualizar Missão Diária' : 'Atualizar Missão')
               : (type === 'daily' ? 'Salvar Missão Diária' : 'Salvar Missão')
             }

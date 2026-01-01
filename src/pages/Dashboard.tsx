@@ -6,7 +6,8 @@ import { ProgressCard } from '@/components/ProgressCard';
 import { LevelUpModal } from '@/components/LevelUpModal';
 import { CreateMissionModal } from '@/components/CreateMissionModal';
 import { toast } from 'sonner';
-import { DAY_NAMES_FULL } from '@/lib/storage';
+
+const DAY_NAMES_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 export function Dashboard() {
   const { todayMissions, completeMission, stats } = useGame();
@@ -17,8 +18,8 @@ export function Dashboard() {
   const dayName = DAY_NAMES_FULL[today.getDay()];
   const dateStr = today.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
 
-  const handleComplete = (missionId: string) => {
-    const result = completeMission(missionId);
+  const handleComplete = async (missionId: string) => {
+    const result = await completeMission(missionId);
     if (result) {
       toast.success(`+${result.expGained} EXP | +${result.coinsGained} moedas`, {
         icon: <Sparkles className="w-4 h-4 text-primary" />,

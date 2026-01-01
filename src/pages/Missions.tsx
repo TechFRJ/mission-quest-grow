@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Plus, Target, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
-import { useGame } from '@/contexts/GameContext';
+import { useGame, Mission, DAY_NAMES } from '@/contexts/GameContext';
 import { CreateMissionModal } from '@/components/CreateMissionModal';
-import { MissionCard } from '@/components/MissionCard';
-import { Mission, DAY_NAMES } from '@/lib/storage';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -31,13 +29,13 @@ export function Missions() {
   const activeMissions = filteredMissions.filter(m => m.active);
   const inactiveMissions = filteredMissions.filter(m => !m.active);
 
-  const handleToggleActive = (mission: Mission) => {
-    updateMission(mission.id, { active: !mission.active });
+  const handleToggleActive = async (mission: Mission) => {
+    await updateMission(mission.id, { active: !mission.active });
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deletingMission) {
-      deleteMission(deletingMission.id);
+      await deleteMission(deletingMission.id);
       setDeletingMission(null);
     }
   };
@@ -207,7 +205,7 @@ function MissionItem({
             )}
           </div>
           <div className="flex items-center gap-3 mt-2 text-sm">
-            <span className="text-exp font-medium">+{mission.exp} EXP</span>
+            <span className="text-exp font-medium">+{mission.xp} EXP</span>
             {mission.coins > 0 && (
               <span className="text-coin font-medium">+{mission.coins} 🪙</span>
             )}
