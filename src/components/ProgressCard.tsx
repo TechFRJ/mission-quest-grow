@@ -7,31 +7,25 @@ export function ProgressCard() {
 
   return (
     <div className="bg-card rounded-xl p-5 shadow-soft">
-      {/* Level & EXP */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <span className="text-sm text-muted-foreground">Nível</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wider">Nível</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-bold text-foreground">{stats.level}</span>
+            <span className="text-3xl font-bold font-mono text-foreground">{stats.level}</span>
           </div>
         </div>
         <div className="text-right">
-          <span className="text-sm text-muted-foreground">EXP</span>
-          <div className="text-lg font-semibold text-exp">
+          <span className="text-xs text-muted-foreground uppercase tracking-wider">EXP</span>
+          <div className="text-base font-bold font-mono text-exp">
             {stats.currentExp} / {stats.expToNext}
           </div>
         </div>
       </div>
-      
-      {/* Progress bar */}
+
       <div className="progress-bar mb-6">
-        <div 
-          className="progress-fill"
-          style={{ width: `${progressPercent}%` }}
-        />
+        <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
       </div>
-      
-      {/* Stats grid */}
+
       <div className="grid grid-cols-4 gap-3">
         <StatItem icon={Target} label="Hoje" value={stats.completionsToday} />
         <StatItem icon={Calendar} label="Semana" value={stats.completionsWeek} />
@@ -48,7 +42,7 @@ function StatItem({ icon: Icon, label, value }: { icon: any; label: string; valu
       <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center mx-auto mb-1">
         <Icon className="w-5 h-5 text-muted-foreground" />
       </div>
-      <div className="font-bold text-foreground">{value}</div>
+      <div className="font-bold font-mono text-foreground">{value}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );

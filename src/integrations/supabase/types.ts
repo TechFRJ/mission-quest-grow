@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_items: {
+        Row: {
+          activated_at: string
+          expires_at: string | null
+          id: string
+          item_type: string
+          mission_id: string | null
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string
+          expires_at?: string | null
+          id?: string
+          item_type: string
+          mission_id?: string | null
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          activated_at?: string
+          expires_at?: string | null
+          id?: string
+          item_type?: string
+          mission_id?: string | null
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_items_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       completions: {
         Row: {
           completed_at: string
@@ -39,6 +77,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "completions_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mission_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_completed_at: string | null
+          max_streak: number
+          mission_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_completed_at?: string | null
+          max_streak?: number
+          mission_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_completed_at?: string | null
+          max_streak?: number
+          mission_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_streaks_mission_id_fkey"
             columns: ["mission_id"]
             isOneToOne: false
             referencedRelation: "missions"
