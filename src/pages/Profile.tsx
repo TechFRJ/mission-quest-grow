@@ -1,9 +1,8 @@
 import { useState, useRef } from 'react';
-import { User, Sparkles, Coins, Target, Trophy, Calendar, History, Gift, Camera, LogOut } from 'lucide-react';
+import { User, Sparkles, Coins, Target, Trophy, Calendar, History, Gift, Camera, LogOut, Flame } from 'lucide-react';
 import { useGame } from '@/contexts/GameContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { getMissions } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
@@ -11,7 +10,8 @@ export function Profile() {
   const { stats } = useGame();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const missions = getMissions();
+  const { missions, streaks } = useGame();
+  const bestStreak = streaks.reduce((max, s) => Math.max(max, s.maxStreak), 0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -128,30 +128,12 @@ export function Profile() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <StatCard
-            icon={Sparkles}
-            label="EXP Total"
-            value={stats.totalExp.toLocaleString()}
-            color="exp"
-          />
-          <StatCard
-            icon={Coins}
-            label="Moedas"
-            value={stats.coins.toLocaleString()}
-            color="coin"
-          />
-          <StatCard
-            icon={Target}
-            label="Missões"
-            value={missions.length.toString()}
-            color="primary"
-          />
-          <StatCard
-            icon={Trophy}
-            label="Concluídas"
-            value={stats.totalCompletions.toString()}
-            color="success"
-          />
+          <StatCard icon={Sparkles} label="EXP Total" value={stats.totalExp.toLocaleString()} color="exp" />
+          <StatCard icon={Coins} label="Moedas" value={stats.coins.toLocaleString()} color="coin" />
+          <StatCard icon={Target} label="Missões" value={missions.length.toString()} color="primary" />
+          <StatCard icon={Trophy} label="Concluídas" value={stats.totalCompletions.toString()} color="success" />
+          <StatCard icon={Flame} label="Melhor Streak" value={bestStreak.toString()} color="streak" />
+          <StatCard icon={Calendar} label="Este Mês" value={stats.completionsMonth.toString()} color="primary" />
         </div>
 
         {/* Completion Stats */}
@@ -242,13 +224,14 @@ function StatCard({
   icon: any;
   label: string;
   value: string;
-  color: 'exp' | 'coin' | 'primary' | 'success';
+  color: 'exp' | 'coin' | 'primary' | 'success' | 'streak';
 }) {
-  const colorClasses = {
+  const colorClasses: Record<string, string> = {
     exp: 'text-exp bg-exp/10',
     coin: 'text-coin bg-coin/10',
     primary: 'text-primary bg-primary/10',
     success: 'text-success bg-success/10',
+    streak: 'text-streak bg-streak/10',
   };
 
   return (
@@ -256,8 +239,8 @@ function StatCard({
       <div className={`w-10 h-10 rounded-lg ${colorClasses[color]} flex items-center justify-center mb-3`}>
         <Icon className="w-5 h-5" />
       </div>
-      <p className="text-2xl font-bold text-foreground">{value}</p>
-      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-2xl font-bold font-mono text-foreground">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );
 }
