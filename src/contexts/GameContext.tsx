@@ -57,6 +57,13 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'golden_mission', name: 'Missão Dourada', description: '3x recompensas na próxima missão', cost: 200, icon: 'Star', type: 'golden_mission', durationHours: null },
 ];
 
+export interface PenaltyInfo {
+  missionTitle: string;
+  coinsLost: number;
+  xpLost: number;
+  reason: string;
+}
+
 interface Stats {
   level: number;
   currentExp: number;
@@ -87,6 +94,8 @@ interface GameContextType {
   loading: boolean;
   streaks: MissionStreak[];
   activeItems: ActiveItem[];
+  recentPenalties: PenaltyInfo[];
+  dismissPenalties: () => void;
   addMission: (mission: Omit<Mission, 'id' | 'createdAt'>) => Promise<void>;
   updateMission: (id: string, updates: Partial<Mission>) => Promise<void>;
   deleteMission: (id: string) => Promise<void>;
@@ -165,7 +174,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [completions, setCompletions] = useState<any[]>([]);
   const [streaks, setStreaks] = useState<MissionStreak[]>([]);
   const [activeItems, setActiveItems] = useState<ActiveItem[]>([]);
+  const [recentPenalties, setRecentPenalties] = useState<PenaltyInfo[]>([]);
 
+  const dismissPenalties = useCallback(() => setRecentPenalties([]), []);
   const hasActiveBoost = useCallback((type: string): boolean => {
     const now = new Date();
     return activeItems.some(item =>
@@ -261,6 +272,109 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           purchases: purchasesData.slice(-10).reverse(),
           globalStreak: profile.streak || 0,
         });
+      }
+
+      // === PENALTY SYSTEM ===
+      // Check for daily missions that were valid yesterday but not completed
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const yesterdayDow = yesterday.getDay();
+
+      // Check if we already applied penalties for yesterday
+      const { data: existingPenalties } = await supabase
+        .from('penalties' as any)
+        .select('mission_id')
+        .eq('user_id', user.id)
+        .eq('penalty_date', yesterdayStr);
+
+      const alreadyPenalized = new Set((existingPenalties as any[] || []).map((p: any) => p.mission_id));
+
+      // Check if day_off was active yesterday
+      const hadDayOff = ((itemsRes.data as any[]) || []).some((i: any) =>
+        i.item_type === 'day_off' && !i.used &&
+        new Date(i.activated_at) <= yesterday &&
+        (!i.expires_at || new Date(i.expires_at) > yesterday)
+      );
+
+      if (!hadDayOff && profile) {
+        const missedMissions = missionsData.filter(m =>
+          m.active && m.type === 'daily' &&
+          m.validDays.includes(yesterdayDow) &&
+          !alreadyPenalized.has(m.id) &&
+          !completionsData.some((c: any) => c.mission_id === m.id && c.completed_at === yesterdayStr)
+        );
+
+        if (missedMissions.length > 0) {
+          const newPenalties: PenaltyInfo[] = [];
+          let totalCoinsLost = 0;
+          let totalXpLost = 0;
+
+          for (const mission of missedMissions) {
+            // Find streak for this mission
+            const streak = streaksData.find(s => s.missionId === mission.id);
+            const hadStreak = streak && streak.currentStreak > 0 && streak.lastCompletedAt !== yesterdayStr;
+
+            let coinsLost = 5; // -5 coins per missed mission
+            let xpLost = 0;
+            let reason = 'missed_daily';
+
+            // Check consecutive failures (3+ = -15 XP)
+            // A broken streak of 3+ means 3 consecutive completions lost
+            if (hadStreak && streak!.currentStreak >= 3) {
+              xpLost = 15;
+              reason = 'streak_broken_3plus';
+            }
+
+            newPenalties.push({
+              missionTitle: mission.title,
+              coinsLost: coinsLost,
+              xpLost: xpLost,
+              reason: reason,
+            });
+
+            totalCoinsLost += coinsLost;
+            totalXpLost += xpLost;
+
+            // Record penalty
+            await (supabase.from('penalties' as any) as any).insert({
+              user_id: user.id,
+              mission_id: mission.id,
+              penalty_date: yesterdayStr,
+              coins_lost: coinsLost,
+              xp_lost: xpLost,
+              reason: reason,
+            });
+
+            // Reset streak if broken
+            if (hadStreak) {
+              await (supabase.from('mission_streaks' as any) as any).update({
+                current_streak: 0,
+              }).eq('user_id', user.id).eq('mission_id', mission.id);
+            }
+          }
+
+          // Apply penalties to profile
+          const newCoins = Math.max(0, profile.coins - totalCoinsLost);
+          const newXp = Math.max(0, profile.xp - totalXpLost);
+          const { level: newLevel, currentExp, expToNext } = calculateLevel(newXp);
+
+          await supabase.from('profiles').update({
+            coins: newCoins, xp: newXp, level: newLevel,
+          }).eq('user_id', user.id);
+
+          // Update local stats
+          setStats(prev => ({
+            ...prev,
+            coins: newCoins,
+            totalExp: newXp,
+            level: newLevel,
+            currentExp,
+            expToNext,
+          }));
+
+          setRecentPenalties(newPenalties);
+        }
       }
     } catch (error) {
       console.error('Error refreshing data:', error);
@@ -464,6 +578,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   return (
     <GameContext.Provider value={{
       missions, rewards, todayMissions, stats, loading, streaks, activeItems,
+      recentPenalties, dismissPenalties,
       addMission, updateMission, deleteMission, completeMission,
       addReward, deleteReward, purchaseReward, purchaseShopItem,
       refreshData, hasActiveBoost,

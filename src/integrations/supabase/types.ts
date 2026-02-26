@@ -167,6 +167,39 @@ export type Database = {
         }
         Relationships: []
       }
+      penalties: {
+        Row: {
+          coins_lost: number
+          created_at: string
+          id: string
+          mission_id: string
+          penalty_date: string
+          reason: string
+          user_id: string
+          xp_lost: number
+        }
+        Insert: {
+          coins_lost?: number
+          created_at?: string
+          id?: string
+          mission_id: string
+          penalty_date: string
+          reason: string
+          user_id: string
+          xp_lost?: number
+        }
+        Update: {
+          coins_lost?: number
+          created_at?: string
+          id?: string
+          mission_id?: string
+          penalty_date?: string
+          reason?: string
+          user_id?: string
+          xp_lost?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

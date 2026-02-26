@@ -5,12 +5,13 @@ import { MissionCard } from '@/components/MissionCard';
 import { ProgressCard } from '@/components/ProgressCard';
 import { LevelUpModal } from '@/components/LevelUpModal';
 import { CreateMissionModal } from '@/components/CreateMissionModal';
+import { PenaltyAlert } from '@/components/PenaltyAlert';
 import { toast } from 'sonner';
 
 const DAY_NAMES_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 export function Dashboard() {
-  const { todayMissions, completeMission, stats, hasActiveBoost, streaks } = useGame();
+  const { todayMissions, completeMission, stats, hasActiveBoost, streaks, recentPenalties, dismissPenalties } = useGame();
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -64,6 +65,11 @@ export function Dashboard() {
               {hasGolden ? 'Missão Dourada ativa — 3x recompensas!' : 'Boost XP ativo — 2x EXP!'}
             </span>
           </div>
+        )}
+
+        {/* Penalty Alert */}
+        {recentPenalties.length > 0 && (
+          <PenaltyAlert penalties={recentPenalties} onDismiss={dismissPenalties} />
         )}
 
         {/* Streak Summary */}
