@@ -52,6 +52,36 @@ export type Database = {
           },
         ]
       }
+      attribute_logs: {
+        Row: {
+          attribute: string
+          created_at: string
+          id: string
+          logged_at: string
+          source_mission_id: string | null
+          user_id: string
+          xp_gained: number
+        }
+        Insert: {
+          attribute: string
+          created_at?: string
+          id?: string
+          logged_at?: string
+          source_mission_id?: string | null
+          user_id: string
+          xp_gained?: number
+        }
+        Update: {
+          attribute?: string
+          created_at?: string
+          id?: string
+          logged_at?: string
+          source_mission_id?: string | null
+          user_id?: string
+          xp_gained?: number
+        }
+        Relationships: []
+      }
       completions: {
         Row: {
           completed_at: string
@@ -203,11 +233,15 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           coins: number
           created_at: string
           email: string | null
+          github_url: string | null
           id: string
           level: number
+          linkedin_url: string | null
+          monthly_goal: string | null
           name: string | null
           streak: number
           updated_at: string
@@ -216,11 +250,15 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           coins?: number
           created_at?: string
           email?: string | null
+          github_url?: string | null
           id?: string
           level?: number
+          linkedin_url?: string | null
+          monthly_goal?: string | null
           name?: string | null
           streak?: number
           updated_at?: string
@@ -229,11 +267,15 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           coins?: number
           created_at?: string
           email?: string | null
+          github_url?: string | null
           id?: string
           level?: number
+          linkedin_url?: string | null
+          monthly_goal?: string | null
           name?: string | null
           streak?: number
           updated_at?: string

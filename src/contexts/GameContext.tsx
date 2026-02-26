@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { categoryToAttribute } from '@/lib/attributes';
 
 export const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -494,6 +495,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     await supabase.from('profiles').update({
       xp: newTotalExp, coins: newCoins, level: newLevel,
     }).eq('user_id', user.id);
+
+    // Log attribute XP
+    const attribute = categoryToAttribute(mission.category);
+    await (supabase.from('attribute_logs' as any) as any).insert({
+      user_id: user.id,
+      attribute,
+      xp_gained: expGained,
+      source_mission_id: missionId,
+      logged_at: getTodayString(),
+    });
 
     await refreshData();
 
