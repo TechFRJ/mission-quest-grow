@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useGame } from '@/contexts/GameContext';
 import { ATTRIBUTES, AttributeKey } from '@/lib/attributes';
 
 interface AttributeScores {
@@ -9,6 +10,7 @@ interface AttributeScores {
 
 export function useAttributes() {
   const { user } = useAuth();
+  const { dataVersion } = useGame();
   const [currentMonth, setCurrentMonth] = useState<AttributeScores>({});
   const [previousMonth, setPreviousMonth] = useState<AttributeScores>({});
   const [currentWeek, setCurrentWeek] = useState<AttributeScores>({});
@@ -65,7 +67,8 @@ export function useAttributes() {
     }
   }, [user]);
 
-  useEffect(() => { fetchAttributes(); }, [fetchAttributes]);
+  // Refetch when user changes or when game data is updated (dataVersion)
+  useEffect(() => { fetchAttributes(); }, [fetchAttributes, dataVersion]);
 
   return { currentMonth, previousMonth, currentWeek, loading, refetch: fetchAttributes };
 }

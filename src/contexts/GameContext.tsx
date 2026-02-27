@@ -107,6 +107,7 @@ interface GameContextType {
   purchaseShopItem: (itemType: string, missionId?: string) => Promise<boolean>;
   refreshData: () => Promise<void>;
   hasActiveBoost: (type: string) => boolean;
+  dataVersion: number;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -176,6 +177,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [streaks, setStreaks] = useState<MissionStreak[]>([]);
   const [activeItems, setActiveItems] = useState<ActiveItem[]>([]);
   const [recentPenalties, setRecentPenalties] = useState<PenaltyInfo[]>([]);
+  const [dataVersion, setDataVersion] = useState(0);
 
   const dismissPenalties = useCallback(() => setRecentPenalties([]), []);
   const hasActiveBoost = useCallback((type: string): boolean => {
@@ -381,6 +383,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       console.error('Error refreshing data:', error);
     } finally {
       setLoading(false);
+      setDataVersion(v => v + 1);
     }
   }, [user]);
 
@@ -592,7 +595,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       recentPenalties, dismissPenalties,
       addMission, updateMission, deleteMission, completeMission,
       addReward, deleteReward, purchaseReward, purchaseShopItem,
-      refreshData, hasActiveBoost,
+      refreshData, hasActiveBoost, dataVersion,
     }}>
       {children}
     </GameContext.Provider>
