@@ -413,12 +413,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     const updateData: any = {};
     if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.category !== undefined) updateData.category = updates.category;
     if (updates.type !== undefined) updateData.type = updates.type;
     if (updates.validDays !== undefined) updateData.valid_days = updates.validDays;
     if (updates.xp !== undefined) updateData.xp = updates.xp;
     if (updates.coins !== undefined) updateData.coins = updates.coins;
     if (updates.active !== undefined) updateData.active = updates.active;
+    if (updates.priority !== undefined) updateData.priority = updates.priority;
+    if (updates.deadline !== undefined) updateData.deadline = updates.deadline;
     const { error } = await supabase.from('missions').update(updateData).eq('id', id).eq('user_id', user.id);
     if (error) {
       toast({ title: 'Erro', description: 'Não foi possível atualizar.', variant: 'destructive' });
