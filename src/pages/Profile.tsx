@@ -21,6 +21,7 @@ export function Profile() {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const { currentMonth, previousMonth, currentWeek, loading: attrLoading } = useAttributes();
+  const { unlocked, loading: badgesLoading } = useAchievements();
   const bestStreak = streaks.reduce((max, s) => Math.max(max, s.maxStreak), 0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
