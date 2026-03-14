@@ -1,11 +1,28 @@
 import { useState } from 'react';
-import { Plus, Minus, Loader2 } from 'lucide-react';
+import { Plus, Minus, Loader2, AlertTriangle } from 'lucide-react';
 import { useGame, Mission, DAY_NAMES } from '@/contexts/GameContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { ModalShell } from '@/components/ModalShell';
+
+const CATEGORIES = [
+  { value: 'trabalho', label: 'Trabalho', icon: '💼' },
+  { value: 'saúde', label: 'Saúde', icon: '💪' },
+  { value: 'estudos', label: 'Aprendizado', icon: '📚' },
+  { value: 'finanças', label: 'Finanças', icon: '💰' },
+  { value: 'pessoal', label: 'Pessoal', icon: '🧘' },
+  { value: 'programação', label: 'Programação', icon: '💻' },
+  { value: 'outros', label: 'Outros', icon: '📦' },
+];
+
+const PRIORITIES = [
+  { value: 'low', label: 'Baixa', color: 'text-muted-foreground bg-secondary' },
+  { value: 'medium', label: 'Média', color: 'text-coin bg-coin/10' },
+  { value: 'high', label: 'Alta', color: 'text-destructive bg-destructive/10' },
+] as const;
 
 interface CreateMissionModalProps {
   onClose: () => void;
@@ -15,8 +32,11 @@ interface CreateMissionModalProps {
 export function CreateMissionModal({ onClose, editMission }: CreateMissionModalProps) {
   const { addMission, updateMission } = useGame();
   const [title, setTitle] = useState(editMission?.title || '');
+  const [description, setDescription] = useState(editMission?.description || '');
   const [category, setCategory] = useState(editMission?.category || '');
   const [type, setType] = useState<'normal' | 'daily'>(editMission?.type || 'normal');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>(editMission?.priority || 'medium');
+  const [deadline, setDeadline] = useState(editMission?.deadline || '');
   const [validDays, setValidDays] = useState<number[]>(editMission?.validDays || [0, 1, 2, 3, 4, 5, 6]);
   const [exp, setExp] = useState(editMission?.xp || 25);
   const [coins, setCoins] = useState(editMission?.coins || 10);
@@ -27,12 +47,15 @@ export function CreateMissionModal({ onClose, editMission }: CreateMissionModalP
     if (!title.trim() || !category.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-    
+
     try {
       const missionData = {
         title: title.trim(),
+        description: description.trim(),
         category: category.trim(),
         type,
+        priority,
+        deadline: deadline || null,
         validDays: type === 'daily' ? validDays : [],
         xp: exp,
         coins,
@@ -64,9 +87,9 @@ export function CreateMissionModal({ onClose, editMission }: CreateMissionModalP
         title={editMission ? 'Editar Missão' : 'Nova Missão'}
         onClose={onClose}
         footer={
-          <Button 
-            type="submit" 
-            className="w-full" 
+          <Button
+            type="submit"
+            className="w-full"
             size="lg"
             disabled={!title.trim() || !category.trim() || isSubmitting}
           >
@@ -75,14 +98,12 @@ export function CreateMissionModal({ onClose, editMission }: CreateMissionModalP
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Salvando...
               </>
-            ) : editMission 
-              ? (type === 'daily' ? 'Atualizar Missão Diária' : 'Atualizar Missão')
-              : (type === 'daily' ? 'Salvar Missão Diária' : 'Salvar Missão')
-            }
+            ) : editMission ? 'Atualizar Missão' : 'Salvar Missão'}
           </Button>
         }
       >
         <div className="space-y-5">
+          {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">Título</Label>
             <Input
@@ -94,17 +115,77 @@ export function CreateMissionModal({ onClose, editMission }: CreateMissionModalP
             />
           </div>
 
+          {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="category">Categoria</Label>
-            <Input
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="Ex: Estudos, Saúde, Trabalho"
-              required
+            <Label htmlFor="description">Descrição (opcional)</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Detalhes sobre a missão..."
+              rows={2}
+              className="resize-none"
             />
           </div>
 
+          {/* Category */}
+          <div className="space-y-2">
+            <Label>Categoria</Label>
+            <div className="grid grid-cols-4 gap-2">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.value}
+                  type="button"
+                  onClick={() => setCategory(cat.value)}
+                  className={cn(
+                    'p-2 rounded-lg text-center transition-all text-xs',
+                    category === cat.value
+                      ? 'border-2 border-primary bg-primary/5 text-primary'
+                      : 'border border-border hover:border-primary/50'
+                  )}
+                >
+                  <span className="text-lg block">{cat.icon}</span>
+                  <span className="mt-0.5 block truncate">{cat.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Priority */}
+          <div className="space-y-2">
+            <Label>Prioridade</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {PRIORITIES.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => setPriority(p.value)}
+                  className={cn(
+                    'px-3 py-2 rounded-lg text-sm font-medium transition-all border-2',
+                    priority === p.value
+                      ? `${p.color} border-current`
+                      : 'border-border text-muted-foreground hover:border-primary/30'
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Deadline */}
+          <div className="space-y-2">
+            <Label htmlFor="deadline">Prazo (opcional)</Label>
+            <Input
+              id="deadline"
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+            />
+          </div>
+
+          {/* Type */}
           <div className="space-y-2">
             <Label>Tipo</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -160,6 +241,7 @@ export function CreateMissionModal({ onClose, editMission }: CreateMissionModalP
             </div>
           )}
 
+          {/* XP & Coins */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>EXP</Label>

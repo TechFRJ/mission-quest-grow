@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          badge_id: string
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       active_items: {
         Row: {
           activated_at: string
@@ -161,7 +182,10 @@ export type Database = {
           category: string
           coins: number
           created_at: string
+          deadline: string | null
+          description: string | null
           id: string
+          priority: string
           title: string
           type: string
           updated_at: string
@@ -174,7 +198,10 @@ export type Database = {
           category: string
           coins?: number
           created_at?: string
+          deadline?: string | null
+          description?: string | null
           id?: string
+          priority?: string
           title: string
           type: string
           updated_at?: string
@@ -187,7 +214,10 @@ export type Database = {
           category?: string
           coins?: number
           created_at?: string
+          deadline?: string | null
+          description?: string | null
           id?: string
+          priority?: string
           title?: string
           type?: string
           updated_at?: string

@@ -6,11 +6,13 @@ import {
 import { useGame } from '@/contexts/GameContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useAttributes } from '@/hooks/useAttributes';
+import { useAchievements } from '@/hooks/useAchievements';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { AttributeRadarChart } from '@/components/AttributeRadarChart';
+import { BadgeGrid } from '@/components/BadgeGrid';
 import { ATTRIBUTES } from '@/lib/attributes';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +21,7 @@ export function Profile() {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const { currentMonth, previousMonth, currentWeek, loading: attrLoading } = useAttributes();
+  const { unlocked, loading: badgesLoading } = useAchievements();
   const bestStreak = streaks.reduce((max, s) => Math.max(max, s.maxStreak), 0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -277,7 +280,21 @@ export function Profile() {
           <MiniStat icon={Calendar} value={stats.completionsMonth} label="Este Mês" />
         </div>
 
-        {/* Activity Summary */}
+        {/* Conquistas */}
+        <div className="bg-card rounded-xl p-5 shadow-soft">
+          <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2 text-sm">
+            <Trophy className="w-4 h-4 text-coin" />
+            Conquistas
+          </h2>
+          {badgesLoading ? (
+            <div className="flex items-center justify-center h-20">
+              <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+            </div>
+          ) : (
+            <BadgeGrid unlocked={unlocked} />
+          )}
+        </div>
+
         <div className="bg-card rounded-xl p-5 shadow-soft">
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2 text-sm">
             <Calendar className="w-4 h-4 text-muted-foreground" />

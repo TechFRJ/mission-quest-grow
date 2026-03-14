@@ -9,8 +9,11 @@ export const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 export interface Mission {
   id: string;
   title: string;
+  description: string;
   category: string;
   type: 'normal' | 'daily';
+  priority: 'low' | 'medium' | 'high';
+  deadline: string | null;
   validDays: number[];
   xp: number;
   coins: number;
@@ -210,8 +213,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       ]);
 
       const missionsData: Mission[] = (missionsRes.data || []).map((m: any) => ({
-        id: m.id, title: m.title, category: m.category,
-        type: m.type as 'normal' | 'daily', validDays: m.valid_days || [],
+        id: m.id, title: m.title, description: m.description || '', category: m.category,
+        type: m.type as 'normal' | 'daily', priority: (m.priority || 'medium') as 'low' | 'medium' | 'high',
+        deadline: m.deadline || null, validDays: m.valid_days || [],
         xp: m.xp, coins: m.coins, active: m.active, createdAt: m.created_at,
       }));
       setMissions(missionsData);
@@ -392,10 +396,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const addMission = useCallback(async (mission: Omit<Mission, 'id' | 'createdAt'>) => {
     if (!user) return;
     const { error } = await supabase.from('missions').insert({
-      user_id: user.id, title: mission.title, category: mission.category,
-      type: mission.type, valid_days: mission.validDays, xp: mission.xp,
-      coins: mission.coins, active: mission.active,
-    });
+      user_id: user.id, title: mission.title, description: (mission as any).description || '',
+      category: mission.category, type: mission.type, valid_days: mission.validDays,
+      xp: mission.xp, coins: mission.coins, active: mission.active,
+      priority: mission.priority || 'medium', deadline: mission.deadline || null,
+    } as any);
     if (error) {
       toast({ title: 'Erro', description: 'Não foi possível salvar a missão.', variant: 'destructive' });
       return;
@@ -408,12 +413,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     const updateData: any = {};
     if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.category !== undefined) updateData.category = updates.category;
     if (updates.type !== undefined) updateData.type = updates.type;
     if (updates.validDays !== undefined) updateData.valid_days = updates.validDays;
     if (updates.xp !== undefined) updateData.xp = updates.xp;
     if (updates.coins !== undefined) updateData.coins = updates.coins;
     if (updates.active !== undefined) updateData.active = updates.active;
+    if (updates.priority !== undefined) updateData.priority = updates.priority;
+    if (updates.deadline !== undefined) updateData.deadline = updates.deadline;
     const { error } = await supabase.from('missions').update(updateData).eq('id', id).eq('user_id', user.id);
     if (error) {
       toast({ title: 'Erro', description: 'Não foi possível atualizar.', variant: 'destructive' });
