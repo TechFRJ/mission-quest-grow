@@ -32,11 +32,26 @@ export function Dashboard() {
   const handleComplete = async (missionId: string) => {
     const result = await completeMission(missionId);
     if (result) {
+      // Fire confetti 🎉
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.7 },
+        colors: ['#a855f7', '#f59e0b', '#22c55e', '#3b82f6'],
+      });
+
       toast.success(`+${result.expGained} EXP | +${result.coinsGained} moedas`, {
         icon: <Sparkles className="w-4 h-4 text-primary" />,
       });
       if (result.levelUp) {
-        setTimeout(() => setLevelUpLevel(result.newLevel), 500);
+        setTimeout(() => {
+          setLevelUpLevel(result.newLevel);
+          confetti({
+            particleCount: 150,
+            spread: 100,
+            origin: { y: 0.5 },
+          });
+        }, 500);
       }
     }
   };
