@@ -182,7 +182,10 @@ export type Database = {
           category: string
           coins: number
           created_at: string
+          deadline: string | null
+          description: string | null
           id: string
+          priority: string
           title: string
           type: string
           updated_at: string
@@ -195,7 +198,10 @@ export type Database = {
           category: string
           coins?: number
           created_at?: string
+          deadline?: string | null
+          description?: string | null
           id?: string
+          priority?: string
           title: string
           type: string
           updated_at?: string
@@ -208,7 +214,10 @@ export type Database = {
           category?: string
           coins?: number
           created_at?: string
+          deadline?: string | null
+          description?: string | null
           id?: string
+          priority?: string
           title?: string
           type?: string
           updated_at?: string
