@@ -213,8 +213,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       ]);
 
       const missionsData: Mission[] = (missionsRes.data || []).map((m: any) => ({
-        id: m.id, title: m.title, category: m.category,
-        type: m.type as 'normal' | 'daily', validDays: m.valid_days || [],
+        id: m.id, title: m.title, description: m.description || '', category: m.category,
+        type: m.type as 'normal' | 'daily', priority: (m.priority || 'medium') as 'low' | 'medium' | 'high',
+        deadline: m.deadline || null, validDays: m.valid_days || [],
         xp: m.xp, coins: m.coins, active: m.active, createdAt: m.created_at,
       }));
       setMissions(missionsData);
