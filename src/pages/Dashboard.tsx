@@ -6,6 +6,8 @@ import { ProgressCard } from '@/components/ProgressCard';
 import { LevelUpModal } from '@/components/LevelUpModal';
 import { CreateMissionModal } from '@/components/CreateMissionModal';
 import { PenaltyAlert } from '@/components/PenaltyAlert';
+import { AchievementUnlockModal } from '@/components/AchievementUnlockModal';
+import { useAchievements } from '@/hooks/useAchievements';
 import { toast } from 'sonner';
 
 const DAY_NAMES_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
