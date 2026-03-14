@@ -146,6 +146,9 @@ export function Dashboard() {
       {showCreateModal && (
         <CreateMissionModal onClose={() => setShowCreateModal(false)} />
       )}
+      {newlyUnlocked.length > 0 && (
+        <AchievementUnlockModal badges={newlyUnlocked} onClose={dismissNewBadges} />
+      )}
     </div>
   );
 }
