@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Target, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Target, Edit2, Trash2, ToggleLeft, ToggleRight, Filter, ArrowUp, ArrowRight, ArrowDown } from 'lucide-react';
 import { useGame, Mission, DAY_NAMES } from '@/contexts/GameContext';
 import { CreateMissionModal } from '@/components/CreateMissionModal';
 import { cn } from '@/lib/utils';
@@ -14,20 +14,45 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+type TypeFilter = 'all' | 'normal' | 'daily';
+type PriorityFilter = 'all' | 'high' | 'medium' | 'low';
+type CategoryFilter = string;
+
 export function Missions() {
   const { missions, updateMission, deleteMission } = useGame();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingMission, setEditingMission] = useState<Mission | null>(null);
   const [deletingMission, setDeletingMission] = useState<Mission | null>(null);
-  const [filter, setFilter] = useState<'all' | 'normal' | 'daily'>('all');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Get unique categories
+  const categories = Array.from(new Set(missions.map(m => m.category))).sort();
 
   const filteredMissions = missions.filter(m => {
-    if (filter === 'all') return true;
-    return m.type === filter;
+    if (typeFilter !== 'all' && m.type !== typeFilter) return false;
+    if (priorityFilter !== 'all' && m.priority !== priorityFilter) return false;
+    if (categoryFilter !== 'all' && m.category !== categoryFilter) return false;
+    return true;
   });
 
-  const activeMissions = filteredMissions.filter(m => m.active);
-  const inactiveMissions = filteredMissions.filter(m => !m.active);
+  // Sort: high priority first, then by deadline
+  const sortedMissions = [...filteredMissions].sort((a, b) => {
+    const pOrder = { high: 0, medium: 1, low: 2 };
+    const pDiff = (pOrder[a.priority] || 1) - (pOrder[b.priority] || 1);
+    if (pDiff !== 0) return pDiff;
+    if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
+    if (a.deadline) return -1;
+    if (b.deadline) return 1;
+    return 0;
+  });
+
+  const activeMissions = sortedMissions.filter(m => m.active);
+  const inactiveMissions = sortedMissions.filter(m => !m.active);
+
+  const activeFiltersCount = [typeFilter !== 'all', priorityFilter !== 'all', categoryFilter !== 'all'].filter(Boolean).length;
 
   const handleToggleActive = async (mission: Mission) => {
     await updateMission(mission.id, { active: !mission.active });
@@ -51,31 +76,112 @@ export function Missions() {
               {missions.length} {missions.length === 1 ? 'missão criada' : 'missões criadas'}
             </p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:bg-primary/90 transition-all active:scale-95"
-          >
-            <Plus className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Filters */}
-        <div className="flex gap-2">
-          {(['all', 'normal', 'daily'] as const).map((f) => (
+          <div className="flex items-center gap-2">
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => setShowFilters(!showFilters)}
               className={cn(
-                'px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                filter === f
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                'w-10 h-10 rounded-full flex items-center justify-center transition-all relative',
+                showFilters ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
               )}
             >
-              {f === 'all' ? 'Todas' : f === 'normal' ? 'Normais' : 'Diárias'}
+              <Filter className="w-5 h-5" />
+              {activeFiltersCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                  {activeFiltersCount}
+                </span>
+              )}
             </button>
-          ))}
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:bg-primary/90 transition-all active:scale-95"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
         </div>
+
+        {/* Filters Panel */}
+        {showFilters && (
+          <div className="bg-card rounded-xl p-4 shadow-soft space-y-3 animate-fade-in-up">
+            {/* Type filter */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-1.5 font-medium">Tipo</p>
+              <div className="flex gap-2">
+                {([['all', 'Todas'], ['normal', 'Normais'], ['daily', 'Diárias']] as const).map(([val, label]) => (
+                  <button
+                    key={val}
+                    onClick={() => setTypeFilter(val)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                      typeFilter === val ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Priority filter */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-1.5 font-medium">Prioridade</p>
+              <div className="flex gap-2">
+                {([['all', 'Todas', null], ['high', 'Alta', ArrowUp], ['medium', 'Média', ArrowRight], ['low', 'Baixa', ArrowDown]] as const).map(([val, label, Icon]) => (
+                  <button
+                    key={val}
+                    onClick={() => setPriorityFilter(val as PriorityFilter)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs font-medium transition-all inline-flex items-center gap-1',
+                      priorityFilter === val ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
+                    )}
+                  >
+                    {Icon && <Icon className="w-3 h-3" />}
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Category filter */}
+            {categories.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1.5 font-medium">Categoria</p>
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => setCategoryFilter('all')}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                      categoryFilter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
+                    )}
+                  >
+                    Todas
+                  </button>
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setCategoryFilter(cat)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all capitalize',
+                        categoryFilter === cat ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={() => { setTypeFilter('all'); setPriorityFilter('all'); setCategoryFilter('all'); }}
+                className="text-xs text-destructive hover:underline"
+              >
+                Limpar filtros
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Active Missions */}
         {activeMissions.length > 0 && (
@@ -183,11 +289,29 @@ function MissionItem({
   onDelete: () => void;
   onToggle: () => void;
 }) {
+  const PRIORITY_ICONS = {
+    high: ArrowUp,
+    medium: ArrowRight,
+    low: ArrowDown,
+  };
+  const PRIORITY_COLORS = {
+    high: 'text-destructive',
+    medium: 'text-coin',
+    low: 'text-muted-foreground',
+  };
+  const PIcon = PRIORITY_ICONS[mission.priority || 'medium'];
+
   return (
     <div className="bg-card rounded-xl p-4 shadow-soft">
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-foreground">{mission.title}</h3>
+          <div className="flex items-center gap-1.5">
+            <PIcon className={cn('w-3.5 h-3.5 flex-shrink-0', PRIORITY_COLORS[mission.priority || 'medium'])} />
+            <h3 className="font-medium text-foreground">{mission.title}</h3>
+          </div>
+          {mission.description && (
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{mission.description}</p>
+          )}
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-xs bg-secondary px-2 py-0.5 rounded-md text-muted-foreground">
               {mission.category}
@@ -201,6 +325,11 @@ function MissionItem({
             {mission.type === 'daily' && (
               <span className="text-xs text-muted-foreground">
                 {mission.validDays.map(d => DAY_NAMES[d]).join(', ')}
+              </span>
+            )}
+            {mission.deadline && (
+              <span className="text-xs text-muted-foreground">
+                📅 {new Date(mission.deadline + 'T00:00:00').toLocaleDateString('pt-BR')}
               </span>
             )}
           </div>

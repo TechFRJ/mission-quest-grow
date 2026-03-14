@@ -1,4 +1,4 @@
-import { Check, Coins, Sparkles, Tag, Flame } from 'lucide-react';
+import { Check, Coins, Sparkles, Tag, Flame, AlertTriangle, Clock, ArrowUp, ArrowRight, ArrowDown } from 'lucide-react';
 import { Mission, useGame } from '@/contexts/GameContext';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -11,6 +11,23 @@ interface MissionCardProps {
   completed?: boolean;
 }
 
+function isDeadlineNear(deadline: string | null): boolean {
+  if (!deadline) return false;
+  const diff = new Date(deadline).getTime() - Date.now();
+  return diff > 0 && diff < 2 * 24 * 60 * 60 * 1000; // 2 days
+}
+
+function isOverdue(deadline: string | null): boolean {
+  if (!deadline) return false;
+  return new Date(deadline).getTime() < Date.now();
+}
+
+const PRIORITY_CONFIG = {
+  high: { icon: ArrowUp, label: 'Alta', className: 'text-destructive' },
+  medium: { icon: ArrowRight, label: 'Média', className: 'text-coin' },
+  low: { icon: ArrowDown, label: 'Baixa', className: 'text-muted-foreground' },
+};
+
 export function MissionCard({ mission, onComplete, showCompleteButton = true, completed = false }: MissionCardProps) {
   const [isCompleting, setIsCompleting] = useState(false);
   const { streaks, hasActiveBoost } = useGame();
@@ -18,6 +35,10 @@ export function MissionCard({ mission, onComplete, showCompleteButton = true, co
   const streak = mission.type === 'daily' ? streaks.find(s => s.missionId === mission.id) : null;
   const hasXpBoost = hasActiveBoost('boost_xp');
   const hasGolden = hasActiveBoost('golden_mission');
+  const deadlineNear = isDeadlineNear(mission.deadline);
+  const overdue = isOverdue(mission.deadline);
+  const priorityInfo = PRIORITY_CONFIG[mission.priority || 'medium'];
+  const PriorityIcon = priorityInfo.icon;
 
   const handleComplete = () => {
     if (isCompleting || completed) return;
@@ -35,7 +56,8 @@ export function MissionCard({ mission, onComplete, showCompleteButton = true, co
     <div className={cn(
       'mission-card flex items-center gap-4',
       completed && 'completed',
-      isCompleting && 'success-pulse bg-success/5'
+      isCompleting && 'success-pulse bg-success/5',
+      overdue && !completed && 'border border-destructive/30',
     )}>
       {showCompleteButton && (
         <button
@@ -54,12 +76,18 @@ export function MissionCard({ mission, onComplete, showCompleteButton = true, co
       )}
 
       <div className="flex-1 min-w-0">
-        <h3 className={cn(
-          'font-medium text-foreground truncate text-sm',
-          completed && 'line-through text-muted-foreground'
-        )}>
-          {mission.title}
-        </h3>
+        <div className="flex items-center gap-1.5">
+          <PriorityIcon className={cn('w-3.5 h-3.5 flex-shrink-0', priorityInfo.className)} />
+          <h3 className={cn(
+            'font-medium text-foreground truncate text-sm',
+            completed && 'line-through text-muted-foreground'
+          )}>
+            {mission.title}
+          </h3>
+        </div>
+        {mission.description && (
+          <p className="text-xs text-muted-foreground truncate mt-0.5">{mission.description}</p>
+        )}
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-md">
             <Tag className="w-3 h-3" />
@@ -70,6 +98,17 @@ export function MissionCard({ mission, onComplete, showCompleteButton = true, co
           )}
           {streak && streak.currentStreak > 0 && (
             <StreakBadge currentStreak={streak.currentStreak} maxStreak={streak.maxStreak} compact />
+          )}
+          {mission.deadline && (
+            <span className={cn(
+              'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md',
+              overdue ? 'bg-destructive/10 text-destructive' :
+              deadlineNear ? 'bg-coin/10 text-coin' :
+              'bg-secondary text-muted-foreground'
+            )}>
+              {overdue ? <AlertTriangle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+              {new Date(mission.deadline + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+            </span>
           )}
         </div>
       </div>
