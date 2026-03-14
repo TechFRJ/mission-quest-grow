@@ -14,6 +14,7 @@ const DAY_NAMES_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sex
 
 export function Dashboard() {
   const { todayMissions, completeMission, stats, hasActiveBoost, streaks, recentPenalties, dismissPenalties } = useGame();
+  const { newlyUnlocked, dismissNewBadges } = useAchievements();
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
