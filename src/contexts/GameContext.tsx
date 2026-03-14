@@ -396,10 +396,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const addMission = useCallback(async (mission: Omit<Mission, 'id' | 'createdAt'>) => {
     if (!user) return;
     const { error } = await supabase.from('missions').insert({
-      user_id: user.id, title: mission.title, category: mission.category,
-      type: mission.type, valid_days: mission.validDays, xp: mission.xp,
-      coins: mission.coins, active: mission.active,
-    });
+      user_id: user.id, title: mission.title, description: (mission as any).description || '',
+      category: mission.category, type: mission.type, valid_days: mission.validDays,
+      xp: mission.xp, coins: mission.coins, active: mission.active,
+      priority: mission.priority || 'medium', deadline: mission.deadline || null,
+    } as any);
     if (error) {
       toast({ title: 'Erro', description: 'Não foi possível salvar a missão.', variant: 'destructive' });
       return;
