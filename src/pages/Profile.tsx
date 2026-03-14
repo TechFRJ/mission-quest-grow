@@ -6,11 +6,13 @@ import {
 import { useGame } from '@/contexts/GameContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useAttributes } from '@/hooks/useAttributes';
+import { useAchievements } from '@/hooks/useAchievements';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { AttributeRadarChart } from '@/components/AttributeRadarChart';
+import { BadgeGrid } from '@/components/BadgeGrid';
 import { ATTRIBUTES } from '@/lib/attributes';
 import { cn } from '@/lib/utils';
 
