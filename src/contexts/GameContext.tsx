@@ -9,8 +9,11 @@ export const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 export interface Mission {
   id: string;
   title: string;
+  description: string;
   category: string;
   type: 'normal' | 'daily';
+  priority: 'low' | 'medium' | 'high';
+  deadline: string | null;
   validDays: number[];
   xp: number;
   coins: number;
