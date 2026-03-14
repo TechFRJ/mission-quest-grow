@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CalendarDays, Plus, Sparkles, Target, Flame, Zap } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { useGame } from '@/contexts/GameContext';
 import { MissionCard } from '@/components/MissionCard';
 import { ProgressCard } from '@/components/ProgressCard';
