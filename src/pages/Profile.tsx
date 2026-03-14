@@ -280,7 +280,21 @@ export function Profile() {
           <MiniStat icon={Calendar} value={stats.completionsMonth} label="Este Mês" />
         </div>
 
-        {/* Activity Summary */}
+        {/* Conquistas */}
+        <div className="bg-card rounded-xl p-5 shadow-soft">
+          <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2 text-sm">
+            <Trophy className="w-4 h-4 text-coin" />
+            Conquistas
+          </h2>
+          {badgesLoading ? (
+            <div className="flex items-center justify-center h-20">
+              <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+            </div>
+          ) : (
+            <BadgeGrid unlocked={unlocked} />
+          )}
+        </div>
+
         <div className="bg-card rounded-xl p-5 shadow-soft">
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2 text-sm">
             <Calendar className="w-4 h-4 text-muted-foreground" />
