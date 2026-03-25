@@ -29,9 +29,11 @@ Deno.serve(async (req) => {
 
     // Fetch from GitHub
     const res = await fetch(
-      'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises.json'
+      'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json'
     );
-    const data = await res.json();
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+    const text = await res.text();
+    const data = JSON.parse(text);
 
     // Map and insert in batches of 100
     const exercises = data.map((e: any) => ({
