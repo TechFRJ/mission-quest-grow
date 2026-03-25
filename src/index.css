@@ -285,3 +285,12 @@
     padding-bottom: calc(4rem + env(safe-area-inset-bottom));
   }
 }
+
+/* Hide scrollbar but allow scrolling */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
