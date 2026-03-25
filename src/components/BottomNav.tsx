@@ -1,4 +1,4 @@
-import { Home, Target, ShoppingBag, User } from 'lucide-react';
+import { Home, Target, ShoppingBag, User, Dumbbell, Apple, Wallet } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -7,6 +7,10 @@ const navItems = [
   { path: '/missions', icon: Target, label: 'Missões' },
   { path: '/shop', icon: ShoppingBag, label: 'Loja' },
   { path: '/profile', icon: User, label: 'Perfil' },
+  { path: '/workouts', icon: Dumbbell, label: 'Treinos' },
+  { path: '/diet', icon: Apple, label: 'Dieta' },
+  { path: '/goals', icon: Target, label: 'Metas' },
+  { path: '/finance', icon: Wallet, label: 'Finanças' },
 ];
 
 export function BottomNav() {
