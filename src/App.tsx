@@ -13,6 +13,10 @@ import { Shop } from "./pages/Shop";
 import { Profile } from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import WorkoutsPage from "./pages/WorkoutsPage";
+import DietPage from "./pages/DietPage";
+import GoalsPage from "./pages/GoalsPage";
+import FinancePage from "./pages/FinancePage";
 
 const queryClient = new QueryClient();
 
