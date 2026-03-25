@@ -106,6 +106,10 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/workouts" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><WorkoutsPage /><BottomNav /></div></ProtectedRoute>} />
+      <Route path="/diet" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><DietPage /><BottomNav /></div></ProtectedRoute>} />
+      <Route path="/goals" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><GoalsPage /><BottomNav /></div></ProtectedRoute>} />
+      <Route path="/finance" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><FinancePage /><BottomNav /></div></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
