@@ -44,6 +44,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  useSeedExercises();
 
   if (loading) {
     return (
