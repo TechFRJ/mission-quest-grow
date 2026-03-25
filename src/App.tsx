@@ -13,6 +13,10 @@ import { Shop } from "./pages/Shop";
 import { Profile } from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import WorkoutsPage from "./pages/WorkoutsPage";
+import DietPage from "./pages/DietPage";
+import GoalsPage from "./pages/GoalsPage";
+import FinancePage from "./pages/FinancePage";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +106,10 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/workouts" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><WorkoutsPage /><BottomNav /></div></ProtectedRoute>} />
+      <Route path="/diet" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><DietPage /><BottomNav /></div></ProtectedRoute>} />
+      <Route path="/goals" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><GoalsPage /><BottomNav /></div></ProtectedRoute>} />
+      <Route path="/finance" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><FinancePage /><BottomNav /></div></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
