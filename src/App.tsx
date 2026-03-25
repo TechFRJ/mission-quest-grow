@@ -17,6 +17,7 @@ import WorkoutsPage from "./pages/WorkoutsPage";
 import DietPage from "./pages/DietPage";
 import GoalsPage from "./pages/GoalsPage";
 import FinancePage from "./pages/FinancePage";
+import { useSeedExercises } from "./hooks/useSeedExercises";
 
 const queryClient = new QueryClient();
 
