@@ -1,4 +1,4 @@
-import { Home, Target, ShoppingBag, User, Dumbbell, Apple, Wallet } from 'lucide-react';
+import { Home, Target, ShoppingBag, User, Dumbbell, Apple, Wallet, Crosshair } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -9,7 +9,7 @@ const navItems = [
   { path: '/profile', icon: User, label: 'Perfil' },
   { path: '/workouts', icon: Dumbbell, label: 'Treinos' },
   { path: '/diet', icon: Apple, label: 'Dieta' },
-  { path: '/goals', icon: Target, label: 'Metas' },
+  { path: '/goals', icon: Crosshair, label: 'Metas' },
   { path: '/finance', icon: Wallet, label: 'Finanças' },
 ];
 
@@ -19,7 +19,7 @@ export function BottomNav() {
 
   return (
     <nav className="bottom-nav z-50">
-      <div className="flex items-center justify-around max-w-lg mx-auto">
+      <div className="flex items-center overflow-x-auto no-scrollbar max-w-2xl mx-auto">
         {navItems.map(({ path, icon: Icon, label }) => {
           const isActive = location.pathname === path;
           return (
@@ -27,12 +27,12 @@ export function BottomNav() {
               key={path}
               onClick={() => navigate(path)}
               className={cn(
-                'nav-item flex-1 min-w-0 py-3',
+                'nav-item flex-1 min-w-[4rem] shrink-0 py-3',
                 isActive && 'active'
               )}
             >
-              <Icon className={cn('w-6 h-6 mb-1 transition-transform', isActive && 'scale-110')} />
-              <span className="text-xs font-medium">{label}</span>
+              <Icon className={cn('w-5 h-5 mb-1 transition-transform', isActive && 'scale-110')} />
+              <span className="text-[0.65rem] font-medium leading-tight">{label}</span>
             </button>
           );
         })}
