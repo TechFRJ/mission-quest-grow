@@ -1,0 +1,1 @@
+ALTER TABLE public.wallets ADD COLUMN linked_wallet_id uuid REFERENCES public.wallets(id) ON DELETE SET NULL;
