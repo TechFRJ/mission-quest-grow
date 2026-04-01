@@ -41,9 +41,9 @@ export interface Transaction {
 }
 
 const DEFAULT_WALLETS = [
-  { name: 'Total Geral', balance: 2000, type: 'cash', limit: null, color: '#22c55e' },
-  { name: 'Cartão Crédito', balance: 400, type: 'credit', limit: 400, color: '#6366f1' },
-  { name: 'Cartão 2', balance: 200, type: 'credit', limit: 200, color: '#f59e0b' },
+  { name: 'Total Geral', balance: 2000, type: 'cash', limit: null, color: '#22c55e', linked_wallet_id: null },
+  { name: 'Cartão Crédito', balance: 400, type: 'credit', limit: 400, color: '#6366f1', linked_wallet_id: null },
+  { name: 'Cartão 2', balance: 200, type: 'credit', limit: 200, color: '#f59e0b', linked_wallet_id: null },
 ];
 
 const DEFAULT_CATEGORIES = [
