@@ -174,6 +174,33 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_categories: {
+        Row: {
+          budget: number | null
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          budget?: number | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          budget?: number | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mission_streaks: {
         Row: {
           created_at: string
@@ -402,6 +429,99 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          active: boolean
+          amount: number
+          category_id: string | null
+          created_at: string
+          date: string
+          id: string
+          is_recurring: boolean
+          name: string
+          recurrence_day: number | null
+          type: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          active?: boolean
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          is_recurring?: boolean
+          name: string
+          recurrence_day?: number | null
+          type?: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          is_recurring?: boolean
+          name?: string
+          recurrence_day?: number | null
+          type?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          balance: number
+          color: string | null
+          created_at: string
+          id: string
+          limit: number | null
+          name: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          color?: string | null
+          created_at?: string
+          id?: string
+          limit?: number | null
+          name: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          color?: string | null
+          created_at?: string
+          id?: string
+          limit?: number | null
+          name?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
