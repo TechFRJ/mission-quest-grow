@@ -127,13 +127,13 @@ export function useFinance() {
         .update({ balance: wallet.balance + amountDelta })
         .eq('id', wallet.id);
 
-      // If credit card expense, also deduct from "Total Geral" (main cash wallet)
-      if (tx.type === 'expense' && wallet.type === 'credit') {
-        const mainWallet = wallets.find(w => w.type === 'cash');
-        if (mainWallet) {
+      // If wallet has a linked wallet, also deduct from it on expense
+      if (tx.type === 'expense' && wallet.linked_wallet_id) {
+        const linkedWallet = wallets.find(w => w.id === wallet.linked_wallet_id);
+        if (linkedWallet) {
           await (supabase.from('wallets' as any) as any)
-            .update({ balance: mainWallet.balance - tx.amount })
-            .eq('id', mainWallet.id);
+            .update({ balance: linkedWallet.balance - tx.amount })
+            .eq('id', linkedWallet.id);
         }
       }
 
