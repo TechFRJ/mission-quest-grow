@@ -171,6 +171,49 @@ export function useFinance() {
     },
   });
 
+  const addWallet = useMutation({
+    mutationFn: async (wallet: Omit<Wallet, 'id' | 'user_id' | 'created_at'>) => {
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await (supabase.from('wallets' as any) as any).insert({ ...wallet, user_id: user.id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      toast({ title: '✅ Carteira criada!' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao criar carteira', variant: 'destructive' });
+    },
+  });
+
+  const updateWallet = useMutation({
+    mutationFn: async ({ id, ...data }: { id: string } & Partial<Wallet>) => {
+      const { error } = await (supabase.from('wallets' as any) as any).update(data).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      toast({ title: '✅ Carteira atualizada!' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao atualizar carteira', variant: 'destructive' });
+    },
+  });
+
+  const deleteWallet = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase.from('wallets' as any) as any).delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      toast({ title: 'Carteira removida' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao remover carteira', variant: 'destructive' });
+    },
+  });
+
   return {
     wallets: walletsQuery.data || [],
     categories: categoriesQuery.data || [],
@@ -179,5 +222,8 @@ export function useFinance() {
     addTransaction,
     toggleRecurring,
     updateCategoryBudget,
+    addWallet,
+    updateWallet,
+    deleteWallet,
   };
 }
