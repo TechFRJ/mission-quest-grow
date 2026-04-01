@@ -1,15 +1,50 @@
 import { Wallet } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useFinance } from '@/hooks/useFinance';
+import OverviewTab from '@/components/finance/OverviewTab';
+import TransactionsTab from '@/components/finance/TransactionsTab';
+import RecurringTab from '@/components/finance/RecurringTab';
+import CategoriesTab from '@/components/finance/CategoriesTab';
 
 export default function FinancePage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="text-center">
-        <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
-          <Wallet className="w-8 h-8 text-muted-foreground" />
-        </div>
-        <h1 className="text-2xl font-bold text-foreground mb-2">Finanças</h1>
-        <p className="text-sm text-muted-foreground">Coming soon</p>
+  const { wallets, categories, transactions, loading, addTransaction, toggleRecurring } = useFinance();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
+    );
+  }
+
+  return (
+    <div className="px-4 pt-4 pb-28 max-w-2xl mx-auto">
+      <div className="flex items-center gap-2 mb-4">
+        <Wallet className="w-6 h-6 text-primary" />
+        <h1 className="text-xl font-bold text-foreground">Finanças</h1>
+      </div>
+
+      <Tabs defaultValue="overview">
+        <TabsList className="w-full grid grid-cols-4 mb-4">
+          <TabsTrigger value="overview" className="text-xs">Visão Geral</TabsTrigger>
+          <TabsTrigger value="transactions" className="text-xs">Transações</TabsTrigger>
+          <TabsTrigger value="recurring" className="text-xs">Fixas</TabsTrigger>
+          <TabsTrigger value="categories" className="text-xs">Categorias</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <OverviewTab wallets={wallets} transactions={transactions} categories={categories} />
+        </TabsContent>
+        <TabsContent value="transactions">
+          <TransactionsTab wallets={wallets} transactions={transactions} categories={categories} addTransaction={addTransaction} />
+        </TabsContent>
+        <TabsContent value="recurring">
+          <RecurringTab transactions={transactions} wallets={wallets} categories={categories} toggleRecurring={toggleRecurring} />
+        </TabsContent>
+        <TabsContent value="categories">
+          <CategoriesTab transactions={transactions} categories={categories} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
