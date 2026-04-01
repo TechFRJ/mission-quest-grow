@@ -9,9 +9,10 @@ export interface Wallet {
   user_id: string;
   name: string;
   balance: number;
-  type: 'cash' | 'credit';
+  type: 'cash' | 'credit' | 'debit' | 'savings';
   limit: number | null;
   color: string;
+  linked_wallet_id: string | null;
   created_at: string;
 }
 
