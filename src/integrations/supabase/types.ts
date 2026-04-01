@@ -500,6 +500,7 @@ export type Database = {
           created_at: string
           id: string
           limit: number | null
+          linked_wallet_id: string | null
           name: string
           type: string
           user_id: string
@@ -510,6 +511,7 @@ export type Database = {
           created_at?: string
           id?: string
           limit?: number | null
+          linked_wallet_id?: string | null
           name: string
           type?: string
           user_id: string
@@ -520,11 +522,20 @@ export type Database = {
           created_at?: string
           id?: string
           limit?: number | null
+          linked_wallet_id?: string | null
           name?: string
           type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wallets_linked_wallet_id_fkey"
+            columns: ["linked_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workout_exercises: {
         Row: {

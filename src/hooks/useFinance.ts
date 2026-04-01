@@ -9,9 +9,10 @@ export interface Wallet {
   user_id: string;
   name: string;
   balance: number;
-  type: 'cash' | 'credit';
+  type: 'cash' | 'credit' | 'debit' | 'savings';
   limit: number | null;
   color: string;
+  linked_wallet_id: string | null;
   created_at: string;
 }
 
@@ -40,9 +41,9 @@ export interface Transaction {
 }
 
 const DEFAULT_WALLETS = [
-  { name: 'Total Geral', balance: 2000, type: 'cash', limit: null, color: '#22c55e' },
-  { name: 'Cartão Crédito', balance: 400, type: 'credit', limit: 400, color: '#6366f1' },
-  { name: 'Cartão 2', balance: 200, type: 'credit', limit: 200, color: '#f59e0b' },
+  { name: 'Total Geral', balance: 2000, type: 'cash', limit: null, color: '#22c55e', linked_wallet_id: null },
+  { name: 'Cartão Crédito', balance: 400, type: 'credit', limit: 400, color: '#6366f1', linked_wallet_id: null },
+  { name: 'Cartão 2', balance: 200, type: 'credit', limit: 200, color: '#f59e0b', linked_wallet_id: null },
 ];
 
 const DEFAULT_CATEGORIES = [
@@ -126,13 +127,13 @@ export function useFinance() {
         .update({ balance: wallet.balance + amountDelta })
         .eq('id', wallet.id);
 
-      // If credit card expense, also deduct from "Total Geral" (main cash wallet)
-      if (tx.type === 'expense' && wallet.type === 'credit') {
-        const mainWallet = wallets.find(w => w.type === 'cash');
-        if (mainWallet) {
+      // If wallet has a linked wallet, also deduct from it on expense
+      if (tx.type === 'expense' && wallet.linked_wallet_id) {
+        const linkedWallet = wallets.find(w => w.id === wallet.linked_wallet_id);
+        if (linkedWallet) {
           await (supabase.from('wallets' as any) as any)
-            .update({ balance: mainWallet.balance - tx.amount })
-            .eq('id', mainWallet.id);
+            .update({ balance: linkedWallet.balance - tx.amount })
+            .eq('id', linkedWallet.id);
         }
       }
 
@@ -170,6 +171,49 @@ export function useFinance() {
     },
   });
 
+  const addWallet = useMutation({
+    mutationFn: async (wallet: Omit<Wallet, 'id' | 'user_id' | 'created_at'>) => {
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await (supabase.from('wallets' as any) as any).insert({ ...wallet, user_id: user.id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      toast({ title: '✅ Carteira criada!' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao criar carteira', variant: 'destructive' });
+    },
+  });
+
+  const updateWallet = useMutation({
+    mutationFn: async ({ id, ...data }: { id: string } & Partial<Wallet>) => {
+      const { error } = await (supabase.from('wallets' as any) as any).update(data).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      toast({ title: '✅ Carteira atualizada!' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao atualizar carteira', variant: 'destructive' });
+    },
+  });
+
+  const deleteWallet = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase.from('wallets' as any) as any).delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      toast({ title: 'Carteira removida' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao remover carteira', variant: 'destructive' });
+    },
+  });
+
   return {
     wallets: walletsQuery.data || [],
     categories: categoriesQuery.data || [],
@@ -178,5 +222,8 @@ export function useFinance() {
     addTransaction,
     toggleRecurring,
     updateCategoryBudget,
+    addWallet,
+    updateWallet,
+    deleteWallet,
   };
 }

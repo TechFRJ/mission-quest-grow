@@ -5,9 +5,10 @@ import OverviewTab from '@/components/finance/OverviewTab';
 import TransactionsTab from '@/components/finance/TransactionsTab';
 import RecurringTab from '@/components/finance/RecurringTab';
 import CategoriesTab from '@/components/finance/CategoriesTab';
+import WalletsTab from '@/components/finance/WalletsTab';
 
 export default function FinancePage() {
-  const { wallets, categories, transactions, loading, addTransaction, toggleRecurring } = useFinance();
+  const { wallets, categories, transactions, loading, addTransaction, toggleRecurring, addWallet, updateWallet, deleteWallet } = useFinance();
 
   if (loading) {
     return (
@@ -25,8 +26,9 @@ export default function FinancePage() {
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="w-full grid grid-cols-4 mb-4">
+        <TabsList className="w-full grid grid-cols-5 mb-4">
           <TabsTrigger value="overview" className="text-xs">Visão Geral</TabsTrigger>
+          <TabsTrigger value="wallets" className="text-xs">Carteiras</TabsTrigger>
           <TabsTrigger value="transactions" className="text-xs">Transações</TabsTrigger>
           <TabsTrigger value="recurring" className="text-xs">Fixas</TabsTrigger>
           <TabsTrigger value="categories" className="text-xs">Categorias</TabsTrigger>
@@ -34,6 +36,9 @@ export default function FinancePage() {
 
         <TabsContent value="overview">
           <OverviewTab wallets={wallets} transactions={transactions} categories={categories} />
+        </TabsContent>
+        <TabsContent value="wallets">
+          <WalletsTab wallets={wallets} addWallet={addWallet} updateWallet={updateWallet} deleteWallet={deleteWallet} />
         </TabsContent>
         <TabsContent value="transactions">
           <TransactionsTab wallets={wallets} transactions={transactions} categories={categories} addTransaction={addTransaction} />
