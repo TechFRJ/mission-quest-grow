@@ -5,8 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { GameProvider } from "@/contexts/GameContext";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+import { AppSidebar, MobileTopNav } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import { Missions } from "./pages/Missions";
 import { Shop } from "./pages/Shop";
@@ -42,6 +41,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-background">
+      <AppSidebar />
+      <MobileTopNav />
+      {/* Content offset: sidebar on desktop, topbar on mobile */}
+      <main className="md:pl-60 pt-14 md:pt-0 min-h-screen">
+        {children}
+      </main>
+    </div>
+  );
+}
+
 function AppRoutes() {
   const { user, loading } = useAuth();
   useSeedExercises();
@@ -60,58 +72,14 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <div className="min-h-screen bg-background">
-              <Header />
-              <Index />
-              <BottomNav />
-            </div>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/missions"
-        element={
-          <ProtectedRoute>
-            <div className="min-h-screen bg-background">
-              <Header />
-              <Missions />
-              <BottomNav />
-            </div>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/shop"
-        element={
-          <ProtectedRoute>
-            <div className="min-h-screen bg-background">
-              <Header />
-              <Shop />
-              <BottomNav />
-            </div>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <div className="min-h-screen bg-background">
-              <Header />
-              <Profile />
-              <BottomNav />
-            </div>
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/workouts" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><WorkoutsPage /><BottomNav /></div></ProtectedRoute>} />
-      <Route path="/diet" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><DietPage /><BottomNav /></div></ProtectedRoute>} />
-      <Route path="/goals" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><GoalsPage /><BottomNav /></div></ProtectedRoute>} />
-      <Route path="/finance" element={<ProtectedRoute><div className="min-h-screen bg-background"><Header /><FinancePage /><BottomNav /></div></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRoute><AppLayout><Index /></AppLayout></ProtectedRoute>} />
+      <Route path="/missions" element={<ProtectedRoute><AppLayout><Missions /></AppLayout></ProtectedRoute>} />
+      <Route path="/shop" element={<ProtectedRoute><AppLayout><Shop /></AppLayout></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
+      <Route path="/workouts" element={<ProtectedRoute><AppLayout><WorkoutsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/diet" element={<ProtectedRoute><AppLayout><DietPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/goals" element={<ProtectedRoute><AppLayout><GoalsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/finance" element={<ProtectedRoute><AppLayout><FinancePage /></AppLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
