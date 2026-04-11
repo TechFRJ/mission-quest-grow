@@ -328,8 +328,6 @@ export function useGoals() {
     getSleepAverage,
     getStreak,
     getInsights,
-    getWeekDates,
+    getWeekDates: () => getWeekDates(),
   };
 }
-
-export { getWeekDates };
