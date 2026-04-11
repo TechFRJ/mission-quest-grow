@@ -1,52 +1,75 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // ---- Types ----
-interface StudyDay {
-  date: string; // YYYY-MM-DD
-  minutes: number;
+export type GoalType = 'study' | 'gym' | 'finance' | 'hydration' | 'reading' | 'meditation' | 'sleep' | 'language';
+
+export interface GoalConfig {
+  // study
+  totalHours?: number;
+  period?: 'weekly' | 'monthly';
+  // gym
+  daysPerWeek?: number;
+  targetDays?: number[]; // 0=Mon..6=Sun
+  // finance
+  targetAmount?: number;
+  financePeriod?: 'monthly' | 'total';
+  // hydration
+  litersPerDay?: number;
+  // reading
+  pagesPerDay?: number;
+  booksPerMonth?: number;
+  readingMode?: 'pages' | 'books';
+  bookName?: string;
+  // meditation
+  minutesPerDay?: number;
+  meditationDays?: number[]; // 0=Mon..6=Sun
+  // sleep
+  hoursPerNight?: number;
+  targetBedtime?: string; // HH:MM
+  // language
+  language?: string;
+  langMinutesPerDay?: number;
 }
 
-interface GymDay {
-  date: string; // YYYY-MM-DD
-  done: boolean;
+export interface GoalProgress {
+  // study / meditation / language: seconds logged per day
+  dailySeconds?: Record<string, number>; // YYYY-MM-DD -> seconds
+  // gym: days checked
+  checkedDays?: string[]; // YYYY-MM-DD[]
+  // finance: entries
+  financeEntries?: { id: string; date: string; amount: number }[];
+  // hydration: cups per day
+  dailyCups?: Record<string, number>; // YYYY-MM-DD -> cups (250ml each)
+  // reading: pages per day
+  dailyPages?: Record<string, number>;
+  booksCompleted?: number;
+  // sleep: hours per day
+  dailySleepHours?: Record<string, number>;
 }
 
-interface MoneyEntry {
+export interface Goal {
   id: string;
-  date: string;
-  amount: number;
+  type: GoalType;
+  name: string;
+  color: string;
+  config: GoalConfig;
+  progress: GoalProgress;
+  createdAt: string;
 }
 
-interface StudyData {
-  weeklyGoalHours: number;
-  days: StudyDay[];
-}
+const GOALS_KEY = 'mqg_goals';
 
-interface GymData {
-  weeklyGoalDays: number;
-  days: GymDay[];
-}
-
-interface MoneyData {
-  monthlyGoal: number;
-  entries: MoneyEntry[];
-}
-
-const STUDY_KEY = 'mqg_study_data';
-const GYM_KEY = 'mqg_gym_data';
-const MONEY_KEY = 'mqg_money_data';
-
-function load<T>(key: string, fallback: T): T {
+function loadGoals(): Goal[] {
   try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
+    const raw = localStorage.getItem(GOALS_KEY);
+    return raw ? JSON.parse(raw) : [];
   } catch {
-    return fallback;
+    return [];
   }
 }
 
-function save<T>(key: string, data: T) {
-  localStorage.setItem(key, JSON.stringify(data));
+function saveGoals(goals: Goal[]) {
+  localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
 }
 
 function today() {
@@ -73,173 +96,240 @@ function getCurrentMonthKey() {
 }
 
 export function useGoals() {
-  const [study, setStudy] = useState<StudyData>(() => load(STUDY_KEY, { weeklyGoalHours: 15, days: [] }));
-  const [gym, setGym] = useState<GymData>(() => load(GYM_KEY, { weeklyGoalDays: 5, days: [] }));
-  const [money, setMoney] = useState<MoneyData>(() => load(MONEY_KEY, { monthlyGoal: 500, entries: [] }));
+  const [goals, setGoals] = useState<Goal[]>(loadGoals);
 
-  useEffect(() => save(STUDY_KEY, study), [study]);
-  useEffect(() => save(GYM_KEY, gym), [gym]);
-  useEffect(() => save(MONEY_KEY, money), [money]);
+  useEffect(() => {
+    saveGoals(goals);
+  }, [goals]);
 
-  // ---- Study ----
-  const addStudyMinutes = useCallback((minutes: number) => {
-    setStudy(prev => {
-      const d = today();
-      const existing = prev.days.find(x => x.date === d);
-      const days = existing
-        ? prev.days.map(x => x.date === d ? { ...x, minutes: x.minutes + minutes } : x)
-        : [...prev.days, { date: d, minutes }];
-      return { ...prev, days };
-    });
+  const addGoal = useCallback((goal: Omit<Goal, 'id' | 'createdAt' | 'progress'>) => {
+    const newGoal: Goal = {
+      ...goal,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      progress: {},
+    };
+    setGoals(prev => [...prev, newGoal]);
+    return newGoal.id;
   }, []);
 
-  const setStudyGoal = useCallback((hours: number) => {
-    setStudy(prev => ({ ...prev, weeklyGoalHours: hours }));
+  const updateGoal = useCallback((id: string, updates: Partial<Pick<Goal, 'name' | 'color' | 'config'>>) => {
+    setGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
   }, []);
 
-  const getStudyWeekMinutes = useCallback(() => {
-    const weekDates = getWeekDates();
-    return study.days
-      .filter(d => weekDates.includes(d.date))
-      .reduce((sum, d) => sum + d.minutes, 0);
-  }, [study.days]);
+  const deleteGoal = useCallback((id: string) => {
+    setGoals(prev => prev.filter(g => g.id !== id));
+  }, []);
 
-  const getStudyLast7Days = useCallback(() => {
-    const result: { date: string; minutes: number }[] = [];
+  const resetProgress = useCallback((id: string) => {
+    setGoals(prev => prev.map(g => g.id === id ? { ...g, progress: {} } : g));
+  }, []);
+
+  // ---- Progress updaters ----
+
+  const addSeconds = useCallback((id: string, seconds: number) => {
+    const d = today();
+    setGoals(prev => prev.map(g => {
+      if (g.id !== id) return g;
+      const dailySeconds = { ...(g.progress.dailySeconds || {}) };
+      dailySeconds[d] = (dailySeconds[d] || 0) + seconds;
+      return { ...g, progress: { ...g.progress, dailySeconds } };
+    }));
+  }, []);
+
+  const toggleGymDay = useCallback((id: string, date?: string) => {
+    const d = date || today();
+    setGoals(prev => prev.map(g => {
+      if (g.id !== id) return g;
+      const checked = [...(g.progress.checkedDays || [])];
+      const idx = checked.indexOf(d);
+      if (idx >= 0) checked.splice(idx, 1);
+      else checked.push(d);
+      return { ...g, progress: { ...g.progress, checkedDays: checked } };
+    }));
+  }, []);
+
+  const addFinanceEntry = useCallback((id: string, amount: number) => {
+    setGoals(prev => prev.map(g => {
+      if (g.id !== id) return g;
+      const entries = [...(g.progress.financeEntries || [])];
+      entries.push({ id: crypto.randomUUID(), date: today(), amount });
+      return { ...g, progress: { ...g.progress, financeEntries: entries } };
+    }));
+  }, []);
+
+  const addCup = useCallback((id: string) => {
+    const d = today();
+    setGoals(prev => prev.map(g => {
+      if (g.id !== id) return g;
+      const dailyCups = { ...(g.progress.dailyCups || {}) };
+      dailyCups[d] = (dailyCups[d] || 0) + 1;
+      return { ...g, progress: { ...g.progress, dailyCups } };
+    }));
+  }, []);
+
+  const addPages = useCallback((id: string, pages: number) => {
+    const d = today();
+    setGoals(prev => prev.map(g => {
+      if (g.id !== id) return g;
+      const dailyPages = { ...(g.progress.dailyPages || {}) };
+      dailyPages[d] = (dailyPages[d] || 0) + pages;
+      return { ...g, progress: { ...g.progress, dailyPages } };
+    }));
+  }, []);
+
+  const logSleep = useCallback((id: string, hours: number) => {
+    const d = today();
+    setGoals(prev => prev.map(g => {
+      if (g.id !== id) return g;
+      const dailySleepHours = { ...(g.progress.dailySleepHours || {}) };
+      dailySleepHours[d] = hours;
+      return { ...g, progress: { ...g.progress, dailySleepHours } };
+    }));
+  }, []);
+
+  // ---- Computed helpers ----
+
+  const getWeekSeconds = useCallback((goal: Goal) => {
+    const week = getWeekDates();
+    const ds = goal.progress.dailySeconds || {};
+    return week.reduce((sum, d) => sum + (ds[d] || 0), 0);
+  }, []);
+
+  const getMonthSeconds = useCallback((goal: Goal) => {
+    const mk = getCurrentMonthKey();
+    const ds = goal.progress.dailySeconds || {};
+    return Object.entries(ds)
+      .filter(([d]) => d.startsWith(mk))
+      .reduce((sum, [, s]) => sum + s, 0);
+  }, []);
+
+  const getGymWeekCount = useCallback((goal: Goal) => {
+    const week = getWeekDates();
+    return (goal.progress.checkedDays || []).filter(d => week.includes(d)).length;
+  }, []);
+
+  const getFinanceTotal = useCallback((goal: Goal) => {
+    const entries = goal.progress.financeEntries || [];
+    if (goal.config.financePeriod === 'monthly') {
+      const mk = getCurrentMonthKey();
+      return entries.filter(e => e.date.startsWith(mk)).reduce((s, e) => s + e.amount, 0);
+    }
+    return entries.reduce((s, e) => s + e.amount, 0);
+  }, []);
+
+  const getTodayCups = useCallback((goal: Goal) => {
+    return (goal.progress.dailyCups || {})[today()] || 0;
+  }, []);
+
+  const getTodayPages = useCallback((goal: Goal) => {
+    return (goal.progress.dailyPages || {})[today()] || 0;
+  }, []);
+
+  const getLast7Days = useCallback((goal: Goal, field: 'dailySeconds' | 'dailyPages' | 'dailySleepHours' | 'dailyCups') => {
+    const result: { date: string; value: number }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().slice(0, 10);
-      const found = study.days.find(x => x.date === dateStr);
-      result.push({ date: dateStr, minutes: found?.minutes || 0 });
+      const data = goal.progress[field] || {};
+      result.push({ date: dateStr, value: (data as Record<string, number>)[dateStr] || 0 });
     }
     return result;
-  }, [study.days]);
-
-  // ---- Gym ----
-  const toggleGymDay = useCallback(() => {
-    const d = today();
-    setGym(prev => {
-      const existing = prev.days.find(x => x.date === d);
-      if (existing) {
-        return { ...prev, days: prev.days.map(x => x.date === d ? { ...x, done: !x.done } : x) };
-      }
-      return { ...prev, days: [...prev.days, { date: d, done: true }] };
-    });
   }, []);
 
-  const setGymGoal = useCallback((days: number) => {
-    setGym(prev => ({ ...prev, weeklyGoalDays: days }));
-  }, []);
+  const getSleepAverage = useCallback((goal: Goal) => {
+    const last7 = getLast7Days(goal, 'dailySleepHours');
+    const filled = last7.filter(d => d.value > 0);
+    if (filled.length === 0) return 0;
+    return filled.reduce((s, d) => s + d.value, 0) / filled.length;
+  }, [getLast7Days]);
 
-  const getGymWeekStatus = useCallback(() => {
-    const weekDates = getWeekDates();
-    return weekDates.map(date => {
-      const found = gym.days.find(d => d.date === date);
-      return { date, done: found?.done || false };
-    });
-  }, [gym.days]);
-
-  const getGymWeekCount = useCallback(() => {
-    return getGymWeekStatus().filter(d => d.done).length;
-  }, [getGymWeekStatus]);
-
-  const getGymLast4Weeks = useCallback(() => {
-    const weeks: { weekStart: string; count: number }[] = [];
-    for (let w = 3; w >= 0; w--) {
-      const now = new Date();
-      const day = now.getDay();
-      const monday = new Date(now);
-      monday.setDate(now.getDate() - ((day + 6) % 7) - (w * 7));
-      let count = 0;
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + i);
-        const dateStr = d.toISOString().slice(0, 10);
-        const found = gym.days.find(x => x.date === dateStr && x.done);
-        if (found) count++;
-      }
-      weeks.push({ weekStart: monday.toISOString().slice(0, 10), count });
+  const getStreak = useCallback((goal: Goal) => {
+    const ds = goal.progress.dailySeconds || {};
+    const checked = goal.progress.checkedDays || [];
+    let streak = 0;
+    for (let i = 0; i < 365; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const hasActivity = (ds[dateStr] && ds[dateStr] > 0) || checked.includes(dateStr);
+      if (hasActivity) streak++;
+      else break;
     }
-    return weeks;
-  }, [gym.days]);
-
-  // ---- Money ----
-  const addMoneyEntry = useCallback((amount: number) => {
-    setMoney(prev => ({
-      ...prev,
-      entries: [...prev.entries, { id: crypto.randomUUID(), date: today(), amount }]
-    }));
+    return streak;
   }, []);
 
-  const setMoneyGoal = useCallback((goal: number) => {
-    setMoney(prev => ({ ...prev, monthlyGoal: goal }));
-  }, []);
-
-  const getMoneyMonthTotal = useCallback(() => {
-    const monthKey = getCurrentMonthKey();
-    return money.entries
-      .filter(e => e.date.startsWith(monthKey))
-      .reduce((sum, e) => sum + e.amount, 0);
-  }, [money.entries]);
-
-  const getMoneyMonthEntries = useCallback(() => {
-    const monthKey = getCurrentMonthKey();
-    return money.entries.filter(e => e.date.startsWith(monthKey));
-  }, [money.entries]);
-
-  // ---- AI Insights ----
+  // ---- Insights ----
   const getInsights = useCallback(() => {
     const insights: string[] = [];
-    const studyPct = (getStudyWeekMinutes() / (study.weeklyGoalHours * 60)) * 100;
-    const gymCount = getGymWeekCount();
-    const moneyPct = (getMoneyMonthTotal() / money.monthlyGoal) * 100;
-
-    if (studyPct < 30) {
-      insights.push('📚 Você estudou muito pouco esta semana. Que tal uma sessão de 25 min agora?');
-    } else if (studyPct < 50) {
-      insights.push('📚 Metade da semana e menos de 50% da meta de estudo. Acelere!');
-    } else if (studyPct >= 100) {
-      insights.push('📚 Meta de estudo batida! Você é uma máquina! 🎯');
-    } else {
-      insights.push(`📚 Bom progresso nos estudos! ${Math.round(studyPct)}% concluído.`);
+    for (const goal of goals) {
+      switch (goal.type) {
+        case 'study':
+        case 'language': {
+          const totalHours = (goal.config.totalHours || 15);
+          const period = goal.config.period || 'weekly';
+          const secs = period === 'weekly' ? getWeekSeconds(goal) : getMonthSeconds(goal);
+          const pct = (secs / (totalHours * 3600)) * 100;
+          if (pct < 30) insights.push(`📚 ${goal.name}: Você estudou pouco. Que tal uma sessão de 25 min agora?`);
+          else if (pct >= 100) insights.push(`📚 ${goal.name}: Meta batida! 🎯`);
+          else insights.push(`📚 ${goal.name}: ${Math.round(pct)}% concluído. Continue!`);
+          break;
+        }
+        case 'gym': {
+          const count = getGymWeekCount(goal);
+          const target = goal.config.daysPerWeek || 5;
+          if (count >= target) insights.push(`💪 ${goal.name}: Meta atingida! 🏆`);
+          else insights.push(`💪 ${goal.name}: Faltam ${target - count} dia(s) esta semana.`);
+          break;
+        }
+        case 'finance': {
+          const total = getFinanceTotal(goal);
+          const target = goal.config.targetAmount || 500;
+          const pct = (total / target) * 100;
+          if (pct >= 100) insights.push(`💰 ${goal.name}: Meta financeira batida!`);
+          else insights.push(`💰 ${goal.name}: ${Math.round(pct)}% da meta. Continue poupando!`);
+          break;
+        }
+      }
     }
-
-    if (gymCount < gym.weeklyGoalDays) {
-      const remaining = gym.weeklyGoalDays - gymCount;
-      insights.push(`💪 Faltam ${remaining} dia${remaining > 1 ? 's' : ''} para bater sua meta de academia. Vamos lá!`);
-    } else {
-      insights.push('💪 Meta de academia atingida! Descanse e recupere. 🏆');
+    if (goals.length === 0) {
+      insights.push('🎯 Crie sua primeira meta e comece a evoluir!');
     }
-
-    if (moneyPct >= 100) {
-      insights.push('💰 Incrível! Meta financeira batida este mês! Continue assim.');
-    } else if (moneyPct >= 70) {
-      insights.push('💰 Quase lá! Falta pouco para a meta de poupança.');
-    } else if (moneyPct < 30) {
-      insights.push('💰 Guarde um pouco hoje. Cada real conta para sua meta!');
-    } else {
-      insights.push(`💰 ${Math.round(moneyPct)}% da meta de poupança. Bom ritmo!`);
-    }
-
-    // motivational extras
     const motivational = [
       '🔥 Disciplina é liberdade. Continue investindo em você.',
       '🧠 Pequenos passos diários criam resultados extraordinários.',
-      '⚡ Hoje é o melhor dia para avançar. Não espere a motivação.',
-      '🎯 Foco no processo, não no resultado. Os resultados virão.',
+      '⚡ Hoje é o melhor dia para avançar.',
       '🚀 Você está construindo a melhor versão de si mesmo.',
     ];
     insights.push(motivational[Math.floor(Math.random() * motivational.length)]);
-
     return insights;
-  }, [study, gym, money, getStudyWeekMinutes, getGymWeekCount, getMoneyMonthTotal]);
+  }, [goals, getWeekSeconds, getMonthSeconds, getGymWeekCount, getFinanceTotal]);
 
   return {
-    study, gym, money,
-    addStudyMinutes, setStudyGoal, getStudyWeekMinutes, getStudyLast7Days,
-    toggleGymDay, setGymGoal, getGymWeekStatus, getGymWeekCount, getGymLast4Weeks,
-    addMoneyEntry, setMoneyGoal, getMoneyMonthTotal, getMoneyMonthEntries,
+    goals,
+    addGoal,
+    updateGoal,
+    deleteGoal,
+    resetProgress,
+    addSeconds,
+    toggleGymDay,
+    addFinanceEntry,
+    addCup,
+    addPages,
+    logSleep,
+    getWeekSeconds,
+    getMonthSeconds,
+    getGymWeekCount,
+    getFinanceTotal,
+    getTodayCups,
+    getTodayPages,
+    getLast7Days,
+    getSleepAverage,
+    getStreak,
     getInsights,
+    getWeekDates,
   };
 }
+
+export { getWeekDates };
