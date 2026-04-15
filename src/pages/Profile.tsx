@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  User, Sparkles, Coins, Target, Trophy, Calendar, History, Gift,
+  User, Sparkles, Coins, Target, Trophy, Calendar, History,
   Camera, LogOut, Flame, Edit3, Save, Github, Linkedin, Loader2, BarChart3,
 } from 'lucide-react';
 import { useGame } from '@/contexts/GameContext';
@@ -36,7 +36,6 @@ export function Profile() {
 
   const progressPercent = Math.min((stats.currentExp / stats.expToNext) * 100, 100);
 
-  // Load profile data
   useEffect(() => {
     if (!user) return;
     supabase.from('profiles').select('avatar_url, bio, monthly_goal, github_url, linkedin_url')
@@ -90,81 +89,72 @@ export function Profile() {
   };
 
   const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Aventureiro';
-
-  // Max attribute value for chart scale
   const allValues = Object.values(currentMonth);
   const maxAttr = Math.max(100, ...allValues, ...Object.values(previousMonth));
 
   return (
     <div className="min-h-screen pb-safe">
-      <main className="container px-4 py-6 space-y-5">
-        {/* Profile Header Card */}
-        <div className="bg-card rounded-xl p-6 shadow-soft">
+      <main className="container px-4 md:px-6 py-6 space-y-5 max-w-3xl mx-auto">
+        {/* Profile Header */}
+        <div className="bg-card rounded-xl p-5 border border-border">
           <div className="flex items-start gap-4">
-            <div
-              className="relative w-20 h-20 flex-shrink-0 cursor-pointer group"
-              onClick={handleAvatarClick}
-            >
+            <div className="relative w-16 h-16 flex-shrink-0 cursor-pointer group" onClick={handleAvatarClick}>
               {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="w-20 h-20 rounded-full object-cover" />
+                <img src={avatarUrl} alt="Avatar" className="w-16 h-16 rounded-xl object-cover" />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="w-10 h-10 text-primary" />
+                <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <User className="w-8 h-8 text-primary" />
                 </div>
               )}
-              <div className="absolute inset-0 rounded-full bg-foreground/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="w-6 h-6 text-background" />
+              <div className="absolute inset-0 rounded-xl bg-foreground/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="w-5 h-5 text-background" />
               </div>
               {uploading && (
-                <div className="absolute inset-0 rounded-full bg-foreground/50 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 text-background animate-spin" />
+                <div className="absolute inset-0 rounded-xl bg-foreground/50 flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 text-background animate-spin" />
                 </div>
               )}
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-foreground truncate">{userName}</h1>
+              <h1 className="text-lg font-bold text-foreground truncate tracking-tight">{userName}</h1>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="stat-badge level text-xs">
+              <div className="flex items-center gap-1.5 mt-2">
+                <div className="stat-badge level text-[10px]">
                   <Sparkles className="w-3 h-3" /> Nv. {stats.level}
                 </div>
                 {bestStreak > 0 && (
-                  <div className="stat-badge streak text-xs">
+                  <div className="stat-badge streak text-[10px]">
                     <Flame className="w-3 h-3" /> {bestStreak}
                   </div>
                 )}
               </div>
             </div>
 
-            <button
-              onClick={() => setEditingBio(!editingBio)}
-              className="text-muted-foreground hover:text-foreground transition-colors p-2"
-            >
+            <button onClick={() => setEditingBio(!editingBio)} className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-muted">
               <Edit3 className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Bio & Goals */}
           {editingBio ? (
             <div className="mt-4 space-y-3 animate-fade-in-up">
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Bio</label>
-                <Input value={bio} onChange={e => setBio(e.target.value)} placeholder="Futuro Dev | Foco total" maxLength={120} />
+                <label className="text-[11px] text-muted-foreground mb-1 block font-medium">Bio</label>
+                <Input value={bio} onChange={e => setBio(e.target.value)} placeholder="Futuro Dev | Foco total" maxLength={120} className="bg-muted border-border" />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Meta do mês</label>
-                <Input value={monthlyGoal} onChange={e => setMonthlyGoal(e.target.value)} placeholder="Ex: 30 dias de código" maxLength={100} />
+                <label className="text-[11px] text-muted-foreground mb-1 block font-medium">Meta do mês</label>
+                <Input value={monthlyGoal} onChange={e => setMonthlyGoal(e.target.value)} placeholder="Ex: 30 dias de código" maxLength={100} className="bg-muted border-border" />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block flex items-center gap-1"><Github className="w-3 h-3" /> GitHub</label>
-                  <Input value={githubUrl} onChange={e => setGithubUrl(e.target.value)} placeholder="username" />
+                  <label className="text-[11px] text-muted-foreground mb-1 block font-medium flex items-center gap-1"><Github className="w-3 h-3" /> GitHub</label>
+                  <Input value={githubUrl} onChange={e => setGithubUrl(e.target.value)} placeholder="username" className="bg-muted border-border" />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block flex items-center gap-1"><Linkedin className="w-3 h-3" /> LinkedIn</label>
-                  <Input value={linkedinUrl} onChange={e => setLinkedinUrl(e.target.value)} placeholder="username" />
+                  <label className="text-[11px] text-muted-foreground mb-1 block font-medium flex items-center gap-1"><Linkedin className="w-3 h-3" /> LinkedIn</label>
+                  <Input value={linkedinUrl} onChange={e => setLinkedinUrl(e.target.value)} placeholder="username" className="bg-muted border-border" />
                 </div>
               </div>
               <Button size="sm" onClick={handleSaveProfile} disabled={savingProfile} className="w-full">
@@ -180,7 +170,7 @@ export function Profile() {
                   <Target className="w-3 h-3 text-primary" /> Meta: {monthlyGoal}
                 </p>
               )}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 mt-1">
                 {githubUrl && (
                   <a href={`https://github.com/${githubUrl}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
                     <Github className="w-4 h-4" />
@@ -196,46 +186,34 @@ export function Profile() {
           )}
         </div>
 
-        {/* EXP Progress */}
-        <div className="bg-card rounded-xl p-5 shadow-soft">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-muted-foreground">Experiência</span>
-            <span className="text-sm font-bold font-mono text-exp">
+        {/* XP Progress */}
+        <div className="bg-card rounded-xl p-4 border border-border">
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-xs font-medium text-muted-foreground">Experiência</span>
+            <span className="text-xs font-bold font-mono text-primary">
               {stats.currentExp} / {stats.expToNext}
             </span>
           </div>
           <div className="progress-bar">
             <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            {stats.expToNext - stats.currentExp} EXP para o próximo nível
+          <p className="text-[11px] text-muted-foreground mt-2 text-center">
+            {stats.expToNext - stats.currentExp} XP para o próximo nível
           </p>
         </div>
 
-        {/* Radar Chart - Attributes */}
-        <div className="bg-card rounded-xl p-5 shadow-soft">
+        {/* Attributes */}
+        <div className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-foreground flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-exp" />
+            <h2 className="font-semibold text-sm text-foreground flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-primary" />
               Atributos
             </h2>
-            <div className="flex bg-secondary rounded-lg p-0.5">
-              <button
-                onClick={() => setChartView('month')}
-                className={cn(
-                  'px-3 py-1 rounded-md text-xs font-medium transition-all',
-                  chartView === 'month' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
-                )}
-              >
+            <div className="flex bg-muted rounded-lg p-0.5">
+              <button onClick={() => setChartView('month')} className={cn('px-2.5 py-1 rounded-md text-[11px] font-medium transition-all', chartView === 'month' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground')}>
                 Mensal
               </button>
-              <button
-                onClick={() => setChartView('week')}
-                className={cn(
-                  'px-3 py-1 rounded-md text-xs font-medium transition-all',
-                  chartView === 'week' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
-                )}
-              >
+              <button onClick={() => setChartView('week')} className={cn('px-2.5 py-1 rounded-md text-[11px] font-medium transition-all', chartView === 'week' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground')}>
                 Semanal
               </button>
             </div>
@@ -243,26 +221,21 @@ export function Profile() {
 
           {attrLoading ? (
             <div className="flex items-center justify-center h-40">
-              <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+              <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
             </div>
           ) : (
-            <AttributeRadarChart
-              current={chartView === 'month' ? currentMonth : currentWeek}
-              previous={chartView === 'month' ? previousMonth : undefined}
-              maxValue={Math.max(100, maxAttr)}
-            />
+            <AttributeRadarChart current={chartView === 'month' ? currentMonth : currentWeek} previous={chartView === 'month' ? previousMonth : undefined} maxValue={Math.max(100, maxAttr)} />
           )}
 
-          {/* Attribute breakdown */}
           <div className="grid grid-cols-2 gap-2 mt-4">
             {ATTRIBUTES.map(attr => {
               const val = chartView === 'month' ? (currentMonth[attr.key] || 0) : (currentWeek[attr.key] || 0);
               return (
-                <div key={attr.key} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-                  <span className="text-base">{attr.icon}</span>
+                <div key={attr.key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                  <span className="text-sm">{attr.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{attr.label}</p>
-                    <p className="text-xs font-mono text-exp">{val} XP</p>
+                    <p className="text-[11px] font-medium text-foreground truncate">{attr.label}</p>
+                    <p className="text-[11px] font-mono text-primary">{val} XP</p>
                   </div>
                 </div>
               );
@@ -270,9 +243,9 @@ export function Profile() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-3">
-          <MiniStat icon={Sparkles} value={stats.totalExp} label="EXP Total" />
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2">
+          <MiniStat icon={Sparkles} value={stats.totalExp} label="XP Total" />
           <MiniStat icon={Coins} value={stats.coins} label="Moedas" />
           <MiniStat icon={Trophy} value={stats.totalCompletions} label="Concluídas" />
           <MiniStat icon={Target} value={missions.length} label="Missões" />
@@ -280,23 +253,24 @@ export function Profile() {
           <MiniStat icon={Calendar} value={stats.completionsMonth} label="Este Mês" />
         </div>
 
-        {/* Conquistas */}
-        <div className="bg-card rounded-xl p-5 shadow-soft">
-          <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2 text-sm">
-            <Trophy className="w-4 h-4 text-coin" />
+        {/* Achievements */}
+        <div className="bg-card rounded-xl p-4 border border-border">
+          <h2 className="font-semibold text-sm text-foreground mb-4 flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-[hsl(var(--coin))]" />
             Conquistas
           </h2>
           {badgesLoading ? (
             <div className="flex items-center justify-center h-20">
-              <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+              <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
             </div>
           ) : (
             <BadgeGrid unlocked={unlocked} />
           )}
         </div>
 
-        <div className="bg-card rounded-xl p-5 shadow-soft">
-          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2 text-sm">
+        {/* Activity */}
+        <div className="bg-card rounded-xl p-4 border border-border">
+          <h2 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
             <Calendar className="w-4 h-4 text-muted-foreground" />
             Atividade
           </h2>
@@ -309,8 +283,8 @@ export function Profile() {
 
         {/* Recent History */}
         {stats.recentCompletions.length > 0 && (
-          <div className="bg-card rounded-xl p-5 shadow-soft">
-            <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2 text-sm">
+          <div className="bg-card rounded-xl p-4 border border-border">
+            <h2 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
               <History className="w-4 h-4 text-muted-foreground" />
               Histórico Recente
             </h2>
@@ -319,10 +293,8 @@ export function Profile() {
                 const mission = missions.find(m => m.id === completion.mission_id);
                 return (
                   <div key={index} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {mission?.title || 'Missão removida'}
-                    </p>
-                    <span className="text-xs text-muted-foreground font-mono">{completion.completed_at}</span>
+                    <p className="text-sm font-medium text-foreground truncate">{mission?.title || 'Missão removida'}</p>
+                    <span className="text-[11px] text-muted-foreground font-mono">{completion.completed_at}</span>
                   </div>
                 );
               })}
@@ -342,9 +314,9 @@ export function Profile() {
 
 function MiniStat({ icon: Icon, value, label }: { icon: any; value: number; label: string }) {
   return (
-    <div className="bg-card rounded-xl p-3 shadow-soft text-center">
-      <Icon className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-      <p className="text-lg font-bold font-mono text-foreground">{value.toLocaleString()}</p>
+    <div className="bg-card rounded-xl p-3 border border-border text-center">
+      <Icon className="w-3.5 h-3.5 text-muted-foreground mx-auto mb-1" />
+      <p className="text-base font-bold font-mono text-foreground">{value.toLocaleString()}</p>
       <p className="text-[10px] text-muted-foreground">{label}</p>
     </div>
   );
@@ -354,7 +326,7 @@ function ActivityRow({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="font-semibold text-foreground text-sm">{value}</span>
+      <span className="font-semibold text-foreground text-sm font-mono">{value}</span>
     </div>
   );
 }

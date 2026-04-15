@@ -25,92 +25,65 @@ export function Shop() {
 
   return (
     <div className="min-h-screen pb-safe">
-      <main className="container px-4 py-6 space-y-5">
-        {/* Header */}
+      <main className="container px-4 md:px-6 py-6 space-y-5 max-w-3xl mx-auto">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Loja</h1>
-            <p className="text-muted-foreground flex items-center gap-2 text-sm">
-              <Coins className="w-4 h-4 text-coin" />
-              <span className="font-mono font-bold text-coin">{stats.coins}</span> moedas
+            <h1 className="text-xl font-bold text-foreground tracking-tight">Loja</h1>
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+              <Coins className="w-3.5 h-3.5 text-[hsl(var(--coin))]" />
+              <span className="font-mono font-bold text-[hsl(var(--coin))]">{stats.coins}</span> moedas disponíveis
             </p>
           </div>
           {tab === 'rewards' && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:bg-primary/90 transition-all active:scale-95"
-            >
-              <Plus className="w-5 h-5" />
+            <button onClick={() => setShowCreateModal(true)}
+              className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95">
+              <Plus className="w-4 h-4" />
             </button>
           )}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-secondary rounded-xl p-1">
-          <button
-            onClick={() => setTab('items')}
-            className={cn(
-              'flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2',
-              tab === 'items' ? 'bg-card text-foreground shadow-soft' : 'text-muted-foreground'
-            )}
-          >
-            <Package className="w-4 h-4" />
+        <div className="flex gap-1 bg-muted rounded-xl p-1">
+          <button onClick={() => setTab('items')}
+            className={cn('flex-1 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5',
+              tab === 'items' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground')}>
+            <Package className="w-3.5 h-3.5" />
             Power-ups
           </button>
-          <button
-            onClick={() => setTab('rewards')}
-            className={cn(
-              'flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2',
-              tab === 'rewards' ? 'bg-card text-foreground shadow-soft' : 'text-muted-foreground'
-            )}
-          >
-            <Gift className="w-4 h-4" />
+          <button onClick={() => setTab('rewards')}
+            className={cn('flex-1 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5',
+              tab === 'rewards' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground')}>
+            <Gift className="w-3.5 h-3.5" />
             Recompensas
           </button>
         </div>
 
-        {/* Items Tab */}
         {tab === 'items' && (
-          <div className="space-y-3 stagger-children">
-            {SHOP_ITEMS.map((item) => (
-              <ShopItemCard
-                key={item.id}
-                item={item}
-                canAfford={stats.coins >= item.cost}
-                isActive={hasActiveBoost(item.type)}
-                onPurchase={() => purchaseShopItem(item.type)}
-              />
+          <div className="space-y-2 stagger-children">
+            {SHOP_ITEMS.map(item => (
+              <ShopItemCard key={item.id} item={item} canAfford={stats.coins >= item.cost} isActive={hasActiveBoost(item.type)} onPurchase={() => purchaseShopItem(item.type)} />
             ))}
           </div>
         )}
 
-        {/* Rewards Tab */}
         {tab === 'rewards' && (
           <>
             {rewards.length > 0 ? (
-              <div className="space-y-3 stagger-children">
-                {rewards.map((reward) => (
-                  <RewardCard
-                    key={reward.id}
-                    reward={reward}
-                    onDelete={() => setDeletingReward(reward)}
-                  />
+              <div className="space-y-2 stagger-children">
+                {rewards.map(reward => (
+                  <RewardCard key={reward.id} reward={reward} onDelete={() => setDeletingReward(reward)} />
                 ))}
               </div>
             ) : (
-              <div className="bg-card rounded-xl p-8 text-center shadow-soft">
-                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
-                  <ShoppingBag className="w-8 h-8 text-muted-foreground" />
+              <div className="bg-card rounded-xl p-8 text-center border border-border">
+                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-4">
+                  <ShoppingBag className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <h3 className="font-medium text-foreground mb-2">Loja vazia</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Adicione recompensas personalizadas!
-                </p>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-all"
-                >
-                  <Plus className="w-4 h-4" />
+                <h3 className="font-semibold text-foreground text-sm mb-1">Loja vazia</h3>
+                <p className="text-xs text-muted-foreground mb-4">Adicione recompensas personalizadas!</p>
+                <button onClick={() => setShowCreateModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-xs hover:bg-primary/90 transition-all">
+                  <Plus className="w-3.5 h-3.5" />
                   Adicionar Recompensa
                 </button>
               </div>
@@ -119,9 +92,7 @@ export function Shop() {
         )}
       </main>
 
-      {showCreateModal && (
-        <CreateRewardModal onClose={() => setShowCreateModal(false)} />
-      )}
+      {showCreateModal && <CreateRewardModal onClose={() => setShowCreateModal(false)} />}
 
       <AlertDialog open={!!deletingReward} onOpenChange={() => setDeletingReward(null)}>
         <AlertDialogContent>

@@ -13,25 +13,30 @@ export default function FinancePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="px-4 pt-4 pb-28 max-w-2xl mx-auto">
-      <div className="flex items-center gap-2 mb-4">
-        <Wallet className="w-6 h-6 text-primary" />
-        <h1 className="text-xl font-bold text-foreground">Finanças</h1>
+    <div className="px-4 md:px-6 pt-6 pb-28 max-w-2xl mx-auto">
+      <div className="flex items-center gap-2.5 mb-5">
+        <div className="w-10 h-10 rounded-xl bg-primary/12 flex items-center justify-center">
+          <Wallet className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-foreground tracking-tight">Finanças</h1>
+          <p className="text-xs text-muted-foreground">Gerencie carteiras, transações e categorias</p>
+        </div>
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="w-full grid grid-cols-5 mb-4">
-          <TabsTrigger value="overview" className="text-xs">Visão Geral</TabsTrigger>
-          <TabsTrigger value="wallets" className="text-xs">Carteiras</TabsTrigger>
-          <TabsTrigger value="transactions" className="text-xs">Transações</TabsTrigger>
-          <TabsTrigger value="recurring" className="text-xs">Fixas</TabsTrigger>
-          <TabsTrigger value="categories" className="text-xs">Categorias</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-5 mb-4 h-10">
+          <TabsTrigger value="overview" className="text-[11px]">Visão Geral</TabsTrigger>
+          <TabsTrigger value="wallets" className="text-[11px]">Carteiras</TabsTrigger>
+          <TabsTrigger value="transactions" className="text-[11px]">Transações</TabsTrigger>
+          <TabsTrigger value="recurring" className="text-[11px]">Fixas</TabsTrigger>
+          <TabsTrigger value="categories" className="text-[11px]">Categorias</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
