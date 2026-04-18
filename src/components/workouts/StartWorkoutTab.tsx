@@ -229,6 +229,7 @@ export default function StartWorkoutTab() {
                         </Badge>
                       ))}
                     </div>
+                    </div>
                   </div>
                   {!isAdded && (
                     <div className="w-7 h-7 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0 mt-0.5">
