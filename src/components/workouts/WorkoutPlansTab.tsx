@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ActiveWorkoutSession from './ActiveWorkoutSession';
+import { translateExerciseName } from '@/lib/exerciseTranslations';
+import ExerciseThumb from './ExerciseThumb';
 
 const DAYS = [
   { label: 'Seg', fullLabel: 'Segunda', value: 1 },
@@ -345,12 +347,13 @@ export default function WorkoutPlansTab() {
                   key={ex.id}
                   onClick={() => addExercise(ex)}
                   disabled={isAdded}
-                  className="w-full text-left px-4 py-3 hover:bg-accent transition-colors flex items-center justify-between disabled:opacity-40 disabled:cursor-not-allowed bg-card"
+                  className="w-full text-left px-3 py-2.5 hover:bg-accent transition-colors flex items-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed bg-card"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{ex.name}</p>
+                  <ExerciseThumb name={ex.name} size={40} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{translateExerciseName(ex.name)}</p>
                     {ex.primary_muscles?.[0] && (
-                      <p className="text-xs text-muted-foreground capitalize mt-0.5">
+                      <p className="text-xs text-muted-foreground capitalize mt-0.5 truncate">
                         {ex.primary_muscles[0]}
                       </p>
                     )}
@@ -378,13 +381,14 @@ export default function WorkoutPlansTab() {
                 className="rounded-xl border border-border bg-card overflow-hidden"
               >
                 <div className="flex items-center justify-between px-4 py-3 bg-muted/30">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <span className="text-xs font-bold text-muted-foreground w-4">{idx + 1}</span>
-                    <span className="text-sm font-semibold text-foreground">{ex.name}</span>
+                    <ExerciseThumb name={ex.name} size={36} />
+                    <span className="text-sm font-semibold text-foreground truncate">{translateExerciseName(ex.name)}</span>
                   </div>
                   <button
                     onClick={() => removeExercise(ex.exercise_id)}
-                    className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                    className="p-1 text-muted-foreground hover:text-destructive transition-colors shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -575,13 +579,14 @@ export default function WorkoutPlansTab() {
                       key={pe.id}
                       className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <span className="text-[0.6rem] font-bold text-muted-foreground/60 w-3">
                           {i + 1}
                         </span>
-                        <span className="text-sm text-foreground">{pe.exercises?.name}</span>
+                        <ExerciseThumb name={pe.exercises?.name} size={28} rounded="rounded-md" />
+                        <span className="text-sm text-foreground truncate">{translateExerciseName(pe.exercises?.name)}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground shrink-0 ml-2">
                         {pe.sets}×{pe.reps}
                         {pe.weight_kg > 0 ? ` · ${pe.weight_kg}kg` : ''}
                       </span>

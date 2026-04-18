@@ -3,8 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { X, CheckCircle2, Timer, SkipForward, ChevronRight, Dumbbell } from 'lucide-react';
+import { X, CheckCircle2, Timer, SkipForward, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { translateExerciseName } from '@/lib/exerciseTranslations';
+import ExerciseThumb, { ExerciseImageLarge } from './ExerciseThumb';
 
 interface PlanExercise {
   id: string;
@@ -209,10 +211,11 @@ export default function ActiveWorkoutSession({ plan, onClose }: Props) {
     const restPct = restLeft / plan.rest_seconds;
     const circumference = 2 * Math.PI * 45;
     const nextSet = currentSet < currentExercise.sets ? currentSet + 1 : 1;
-    const nextExName =
+    const nextExRawName =
       currentSet < currentExercise.sets
         ? currentExercise.exercises.name
         : exercises[exIdx + 1]?.exercises?.name ?? '';
+    const nextExName = translateExerciseName(nextExRawName);
 
     return (
       <div className="fixed inset-0 z-50 bg-background flex flex-col">
@@ -274,10 +277,13 @@ export default function ActiveWorkoutSession({ plan, onClose }: Props) {
             </div>
           </div>
 
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Próximo</p>
-            <p className="text-base font-bold text-foreground">{nextExName}</p>
-            <p className="text-sm text-muted-foreground">Série {nextSet}</p>
+          <div className="flex items-center gap-3">
+            {nextExRawName && <ExerciseThumb name={nextExRawName} size={48} />}
+            <div className="text-left">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">Próximo</p>
+              <p className="text-base font-bold text-foreground">{nextExName}</p>
+              <p className="text-sm text-muted-foreground">Série {nextSet}</p>
+            </div>
           </div>
 
           <Button variant="outline" onClick={skipRest} className="gap-2 rounded-xl px-6">
@@ -339,26 +345,29 @@ export default function ActiveWorkoutSession({ plan, onClose }: Props) {
                     : 'text-muted-foreground/50'
                 }`}
               >
-                {i < exIdx && <CheckCircle2 className="w-3 h-3" />}
-                <span className="max-w-[72px] truncate">{ex.exercises.name.split(' ')[0]}</span>
+              {i < exIdx && <CheckCircle2 className="w-3 h-3" />}
+                <span className="max-w-[80px] truncate">{translateExerciseName(ex.exercises.name).split(' ')[0]}</span>
               </div>
             </div>
           ))}
         </div>
 
         {/* Current exercise */}
-        <div className="rounded-2xl border border-border bg-card p-6 text-center space-y-1">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest">
-            Exercício {exIdx + 1} de {exercises.length}
-          </p>
-          <h2 className="text-2xl font-extrabold text-foreground leading-tight">
-            {currentExercise.exercises.name}
-          </h2>
-          {currentExercise.exercises.primary_muscles?.[0] && (
-            <p className="text-sm text-muted-foreground capitalize">
-              {currentExercise.exercises.primary_muscles[0]}
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <ExerciseImageLarge name={currentExercise.exercises.name} className="rounded-none" />
+          <div className="p-5 text-center space-y-1">
+            <p className="text-xs text-muted-foreground uppercase tracking-widest">
+              Exercício {exIdx + 1} de {exercises.length}
             </p>
-          )}
+            <h2 className="text-2xl font-extrabold text-foreground leading-tight">
+              {translateExerciseName(currentExercise.exercises.name)}
+            </h2>
+            {currentExercise.exercises.primary_muscles?.[0] && (
+              <p className="text-sm text-muted-foreground capitalize">
+                {currentExercise.exercises.primary_muscles[0]}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Set tracker */}
@@ -419,11 +428,11 @@ export default function ActiveWorkoutSession({ plan, onClose }: Props) {
             {exercises.slice(exIdx + 1).map((ex) => (
               <div
                 key={ex.id}
-                className="flex items-center justify-between px-4 py-3 rounded-xl border border-border/50 bg-card/40"
+                className="flex items-center justify-between px-3 py-2 rounded-xl border border-border/50 bg-card/40"
               >
-                <div className="flex items-center gap-2">
-                  <Dumbbell className="w-3.5 h-3.5 text-muted-foreground/50" />
-                  <span className="text-sm text-muted-foreground">{ex.exercises.name}</span>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <ExerciseThumb name={ex.exercises.name} size={36} />
+                  <span className="text-sm text-muted-foreground truncate">{translateExerciseName(ex.exercises.name)}</span>
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {ex.sets}×{ex.reps}
