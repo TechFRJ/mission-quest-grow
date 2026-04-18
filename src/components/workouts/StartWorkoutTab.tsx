@@ -267,8 +267,9 @@ export default function StartWorkoutTab() {
             {selected.map((ex) => (
               <div key={ex.exercise_id} className="flex items-center gap-2 p-2 rounded-lg bg-background border border-border/50">
                 <GripVertical className="w-4 h-4 text-muted-foreground/40 shrink-0 cursor-grab" />
+                <ExerciseThumb name={ex.name} size={32} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-foreground truncate mb-1.5">{ex.name}</p>
+                  <p className="text-xs font-semibold text-foreground truncate mb-1.5">{translateExerciseName(ex.name)}</p>
                   <div className="flex items-center gap-1.5">
                     <div className="flex items-center gap-0.5">
                       <Input
