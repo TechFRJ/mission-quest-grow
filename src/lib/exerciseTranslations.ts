@@ -107,7 +107,6 @@ const TRANSLATIONS: Record<string, string> = {
   "lying triceps extension": "Tríceps Testa",
   "overhead tricep extension": "Tríceps Francês",
   "close grip bench press": "Supino Pegada Fechada",
-  "diamond push up": "Flexão Diamante",
 
   // Core
   "plank": "Prancha",
