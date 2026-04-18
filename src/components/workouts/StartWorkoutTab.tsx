@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Plus, X, CheckCircle, Loader2, GripVertical, Dumbbell } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { translateExerciseName } from '@/lib/exerciseTranslations';
+import ExerciseThumb from './ExerciseThumb';
 
 interface SelectedExercise {
   exercise_id: string;
