@@ -210,9 +210,11 @@ export default function StartWorkoutTab() {
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-foreground truncate">{ex.name}</p>
-                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                    <ExerciseThumb name={ex.name} size={36} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-foreground truncate">{translateExerciseName(ex.name)}</p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                       <Badge variant="outline" className={`text-[0.6rem] px-1.5 py-0 ${lvl.className}`}>
                         {lvl.label}
                       </Badge>
