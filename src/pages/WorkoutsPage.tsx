@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StartWorkoutTab from '@/components/workouts/StartWorkoutTab';
 import WorkoutHistoryTab from '@/components/workouts/WorkoutHistoryTab';
+import WorkoutPlansTab from '@/components/workouts/WorkoutPlansTab';
 import { Dumbbell, Flame, Zap, CalendarCheck } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +35,7 @@ export default function WorkoutsPage() {
 
       let streak = 0;
       if (recentWorkouts?.length) {
-        const uniqueDates = [...new Set(recentWorkouts.map(w => w.date))].sort().reverse();
+        const uniqueDates = [...new Set(recentWorkouts.map((w) => w.date))].sort().reverse();
         const today = format(now, 'yyyy-MM-dd');
         const yesterday = format(new Date(now.getTime() - 86400000), 'yyyy-MM-dd');
 
@@ -59,43 +60,61 @@ export default function WorkoutsPage() {
   const stats = weekStats || { count: 0, streak: 0, xp: 0 };
 
   return (
-    <div className="min-h-screen bg-background px-4 md:px-6 pt-6 pb-24">
+    <div className="min-h-screen bg-background px-4 pt-6 pb-24">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl bg-[hsl(var(--success))]/12 flex items-center justify-center">
-            <Dumbbell className="w-5 h-5 text-[hsl(var(--success))]" />
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-11 h-11 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+            <Dumbbell className="w-6 h-6 text-emerald-500" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground tracking-tight">Treinos</h1>
-            <p className="text-xs text-muted-foreground">Registre e acompanhe seus treinos</p>
+            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Treinos</h1>
+            <p className="text-xs text-muted-foreground">Planos, sessões e histórico</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mb-5">
+        {/* Stats Bar */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="rounded-xl border border-border bg-card p-3 text-center">
-            <CalendarCheck className="w-3.5 h-3.5 mx-auto mb-1 text-primary" />
-            <p className="text-base font-bold text-foreground font-mono">{stats.count}</p>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Esta semana</p>
+            <CalendarCheck className="w-4 h-4 mx-auto mb-1 text-primary" />
+            <p className="text-lg font-bold text-foreground">{stats.count}</p>
+            <p className="text-[0.6rem] text-muted-foreground uppercase tracking-wider">Esta semana</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-3 text-center">
-            <Flame className="w-3.5 h-3.5 mx-auto mb-1 text-[hsl(var(--streak))]" />
-            <p className="text-base font-bold text-foreground font-mono">{stats.streak} 🔥</p>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Streak</p>
+            <Flame className="w-4 h-4 mx-auto mb-1 text-orange-500" />
+            <p className="text-lg font-bold text-foreground">{stats.streak} 🔥</p>
+            <p className="text-[0.6rem] text-muted-foreground uppercase tracking-wider">Streak</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-3 text-center">
-            <Zap className="w-3.5 h-3.5 mx-auto mb-1 text-primary" />
-            <p className="text-base font-bold text-foreground font-mono">{stats.xp}</p>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">XP Semana</p>
+            <Zap className="w-4 h-4 mx-auto mb-1 text-violet-500" />
+            <p className="text-lg font-bold text-foreground">{stats.xp}</p>
+            <p className="text-[0.6rem] text-muted-foreground uppercase tracking-wider">XP Semana</p>
           </div>
         </div>
 
-        <Tabs defaultValue="start" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-10 rounded-xl">
-            <TabsTrigger value="start" className="rounded-lg font-semibold text-xs">Iniciar Treino</TabsTrigger>
-            <TabsTrigger value="history" className="rounded-lg font-semibold text-xs">Histórico</TabsTrigger>
+        {/* Tabs */}
+        <Tabs defaultValue="plans" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 h-11 rounded-xl">
+            <TabsTrigger value="plans" className="rounded-lg font-semibold text-xs">
+              Meus Planos
+            </TabsTrigger>
+            <TabsTrigger value="start" className="rounded-lg font-semibold text-xs">
+              Treino Livre
+            </TabsTrigger>
+            <TabsTrigger value="history" className="rounded-lg font-semibold text-xs">
+              Histórico
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="start"><StartWorkoutTab /></TabsContent>
-          <TabsContent value="history"><WorkoutHistoryTab /></TabsContent>
+
+          <TabsContent value="plans">
+            <WorkoutPlansTab />
+          </TabsContent>
+          <TabsContent value="start">
+            <StartWorkoutTab />
+          </TabsContent>
+          <TabsContent value="history">
+            <WorkoutHistoryTab />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
