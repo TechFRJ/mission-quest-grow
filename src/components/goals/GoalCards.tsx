@@ -469,9 +469,11 @@ function SleepGoalCard({ goal, hooks, onEdit }: CardProps) {
 export function GoalCard({ goal, hooks, onEdit }: CardProps) {
   switch (goal.type) {
     case 'study':
+      return <StudyGoalCard goal={goal} hooks={hooks} onEdit={onEdit} />;
     case 'language':
     case 'meditation':
       return <TimerGoalCard goal={goal} hooks={hooks} onEdit={onEdit} />;
+
     case 'gym':
       return <GymGoalCard goal={goal} hooks={hooks} onEdit={onEdit} />;
     case 'finance':
