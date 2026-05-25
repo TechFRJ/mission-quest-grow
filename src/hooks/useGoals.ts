@@ -127,8 +127,8 @@ export function useGoals() {
 
   // ---- Progress updaters ----
 
-  const addSeconds = useCallback((id: string, seconds: number) => {
-    const d = today();
+  const addSeconds = useCallback((id: string, seconds: number, date?: string) => {
+    const d = date || today();
     setGoals(prev => prev.map(g => {
       if (g.id !== id) return g;
       const dailySeconds = { ...(g.progress.dailySeconds || {}) };
@@ -136,6 +136,7 @@ export function useGoals() {
       return { ...g, progress: { ...g.progress, dailySeconds } };
     }));
   }, []);
+
 
   const toggleGymDay = useCallback((id: string, date?: string) => {
     const d = date || today();
