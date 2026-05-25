@@ -33,26 +33,120 @@ function GoalMenu({ goal, hooks, onEdit }: CardProps) {
   );
 }
 
-// ---- STUDY / LANGUAGE / MEDITATION cards (timer-based) ----
-function TimerGoalCard({ goal, hooks, onEdit }: CardProps) {
-  const [timerOpen, setTimerOpen] = useState(false);
-  const isStudy = goal.type === 'study';
-  const isLang = goal.type === 'language';
-  const isMed = goal.type === 'meditation';
+// ---- STUDY card (manual hour entry with date) ----
+function StudyGoalCard({ goal, hooks, onEdit }: CardProps) {
+  const [hours, setHours] = useState('');
+  const [minutes, setMinutes] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
 
   const period = goal.config.period || 'weekly';
   const totalSecs = period === 'weekly' ? hooks.getWeekSeconds(goal) : hooks.getMonthSeconds(goal);
+  const targetSecs = (goal.config.totalHours || 15) * 3600;
+  const pct = Math.min((totalSecs / targetSecs) * 100, 100);
+
+  const hoursStudied = totalSecs / 3600;
+  const targetHours = goal.config.totalHours || 15;
+  const remaining = Math.max(targetHours - hoursStudied, 0);
+
+  const last7 = hooks.getLast7Days(goal, 'dailySeconds');
+  const maxVal = Math.max(...last7.map(d => d.value), 1);
+  const dayLabels = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+
+  const handleAdd = () => {
+    const h = parseFloat(hours) || 0;
+    const m = parseFloat(minutes) || 0;
+    const totalSec = Math.round(h * 3600 + m * 60);
+    if (totalSec > 0) {
+      hooks.addSeconds(goal.id, totalSec, date);
+      setHours('');
+      setMinutes('');
+    }
+  };
+
+  return (
+    <div className="neon-card" style={{ borderColor: `${goal.color}33` }}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">📚</span>
+          <h3 className="text-sm font-bold text-foreground truncate">{goal.name}</h3>
+        </div>
+        <GoalMenu goal={goal} hooks={hooks} onEdit={onEdit} />
+      </div>
+
+      <div className="text-center mb-3 py-3 rounded-lg bg-muted/40">
+        <div className="text-3xl font-mono font-bold" style={{ color: goal.color }}>
+          {hoursStudied.toFixed(1)}h
+        </div>
+        <div className="text-[11px] text-muted-foreground mt-0.5">
+          estudadas {period === 'weekly' ? 'esta semana' : 'este mês'} · meta {targetHours}h
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <div className="flex justify-between text-xs mb-1">
+          <span className="text-muted-foreground">Progresso</span>
+          <span className="font-mono font-bold" style={{ color: goal.color }}>{Math.round(pct)}%</span>
+        </div>
+        <div className="h-2 rounded-full bg-muted overflow-hidden">
+          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: goal.color }} />
+        </div>
+        {remaining > 0 && (
+          <div className="text-[10px] text-muted-foreground mt-1 text-right">faltam {remaining.toFixed(1)}h</div>
+        )}
+      </div>
+
+      <div className="space-y-2 mb-3">
+        <Input
+          type="date"
+          value={date}
+          max={new Date().toISOString().slice(0, 10)}
+          onChange={e => setDate(e.target.value)}
+          className="bg-muted h-9 text-xs"
+        />
+        <div className="flex gap-2">
+          <Input type="number" placeholder="Horas" value={hours} onChange={e => setHours(e.target.value)} min="0" className="bg-muted h-9 text-xs" />
+          <Input type="number" placeholder="Min" value={minutes} onChange={e => setMinutes(e.target.value)} min="0" max="59" className="bg-muted h-9 text-xs" />
+          <Button onClick={handleAdd} variant="outline" className="shrink-0 gap-1 h-9">
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Mini chart - last 7 days */}
+      <div>
+        <div className="flex items-end gap-1 h-10">
+          {last7.map(d => (
+            <div key={d.date} className="flex-1 rounded-sm transition-all" style={{
+              height: `${Math.max((d.value / maxVal) * 100, 6)}%`,
+              backgroundColor: d.value > 0 ? goal.color : 'hsl(var(--muted))',
+            }} title={`${(d.value / 3600).toFixed(1)}h`} />
+          ))}
+        </div>
+        <div className="flex gap-1 mt-1">
+          {last7.map((d, i) => (
+            <div key={d.date} className="flex-1 text-center text-[9px] text-muted-foreground">
+              {dayLabels[new Date(d.date + 'T12:00:00').getDay()]}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {pct >= 100 && <div className="mt-2 text-center text-xs font-bold animate-pulse" style={{ color: goal.color }}>✅ Meta concluída!</div>}
+    </div>
+  );
+}
+
+// ---- LANGUAGE / MEDITATION cards (timer-based) ----
+function TimerGoalCard({ goal, hooks, onEdit }: CardProps) {
+  const [timerOpen, setTimerOpen] = useState(false);
+  const isLang = goal.type === 'language';
+  const isMed = goal.type === 'meditation';
 
   let targetSecs: number;
-  if (isMed) targetSecs = (goal.config.minutesPerDay || 10) * 60; // daily
-  else if (isLang) targetSecs = (goal.config.langMinutesPerDay || 15) * 60; // daily
-  else targetSecs = (goal.config.totalHours || 15) * 3600; // weekly/monthly
+  if (isMed) targetSecs = (goal.config.minutesPerDay || 10) * 60;
+  else targetSecs = (goal.config.langMinutesPerDay || 15) * 60;
 
-  // For daily goals, use today's seconds
-  const displaySecs = (isMed || isLang)
-    ? ((goal.progress.dailySeconds || {})[new Date().toISOString().slice(0, 10)] || 0)
-    : totalSecs;
-
+  const displaySecs = (goal.progress.dailySeconds || {})[new Date().toISOString().slice(0, 10)] || 0;
   const pct = Math.min((displaySecs / targetSecs) * 100, 100);
 
   const formatTime = (s: number) => {
@@ -62,13 +156,12 @@ function TimerGoalCard({ goal, hooks, onEdit }: CardProps) {
 
   const formatTarget = () => {
     if (isMed) return `${goal.config.minutesPerDay}min/dia`;
-    if (isLang) return `${goal.config.langMinutesPerDay}min/dia`;
-    return `${goal.config.totalHours}h/${period === 'weekly' ? 'sem' : 'mês'}`;
+    return `${goal.config.langMinutesPerDay}min/dia`;
   };
 
   const last7 = hooks.getLast7Days(goal, 'dailySeconds');
   const maxVal = Math.max(...last7.map(d => d.value), 1);
-  const streak = (isLang) ? hooks.getStreak(goal) : 0;
+  const streak = isLang ? hooks.getStreak(goal) : 0;
 
   return (
     <>
@@ -83,7 +176,7 @@ function TimerGoalCard({ goal, hooks, onEdit }: CardProps) {
 
         <div className="mb-2">
           <div className="flex justify-between text-xs mb-1">
-            <span className="text-muted-foreground">Progresso {isMed || isLang ? 'hoje' : period === 'weekly' ? 'semanal' : 'mensal'}</span>
+            <span className="text-muted-foreground">Progresso hoje</span>
             <span className="font-mono font-bold" style={{ color: goal.color }}>{formatTime(displaySecs)} / {formatTarget()}</span>
           </div>
           <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -101,7 +194,6 @@ function TimerGoalCard({ goal, hooks, onEdit }: CardProps) {
           </div>
         )}
 
-        {/* Mini chart */}
         <div className="flex items-end gap-1 h-8">
           {last7.map(d => (
             <div key={d.date} className="flex-1 rounded-sm transition-all" style={{
@@ -123,6 +215,7 @@ function TimerGoalCard({ goal, hooks, onEdit }: CardProps) {
     </>
   );
 }
+
 
 // ---- GYM card ----
 function GymGoalCard({ goal, hooks, onEdit }: CardProps) {
@@ -376,9 +469,11 @@ function SleepGoalCard({ goal, hooks, onEdit }: CardProps) {
 export function GoalCard({ goal, hooks, onEdit }: CardProps) {
   switch (goal.type) {
     case 'study':
+      return <StudyGoalCard goal={goal} hooks={hooks} onEdit={onEdit} />;
     case 'language':
     case 'meditation':
       return <TimerGoalCard goal={goal} hooks={hooks} onEdit={onEdit} />;
+
     case 'gym':
       return <GymGoalCard goal={goal} hooks={hooks} onEdit={onEdit} />;
     case 'finance':
