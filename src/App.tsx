@@ -16,6 +16,7 @@ import WorkoutsPage from "./pages/WorkoutsPage";
 import DietPage from "./pages/DietPage";
 import GoalsPage from "./pages/GoalsPage";
 import FinancePage from "./pages/FinancePage";
+import FocusPage from "./pages/FocusPage";
 import { useSeedExercises } from "./hooks/useSeedExercises";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,7 @@ function AppRoutes() {
       <Route path="/diet" element={<ProtectedRoute><AppLayout><DietPage /></AppLayout></ProtectedRoute>} />
       <Route path="/goals" element={<ProtectedRoute><AppLayout><GoalsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/finance" element={<ProtectedRoute><AppLayout><FinancePage /></AppLayout></ProtectedRoute>} />
+      <Route path="/focus" element={<ProtectedRoute><AppLayout><FocusPage /></AppLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

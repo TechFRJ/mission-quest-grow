@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Home, Target, ShoppingBag, User, Dumbbell, Apple,
   Crosshair, Wallet, Coins, Flame, ChevronLeft,
-  ChevronRight, Menu, X, Zap, LogOut,
+  ChevronRight, Menu, X, Zap, LogOut, Brain,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Dashboard' },
+  { path: '/focus', icon: Brain, label: 'Foco APEX' },
   { path: '/missions', icon: Target, label: 'Missões' },
   { path: '/goals', icon: Crosshair, label: 'Metas' },
   { path: '/workouts', icon: Dumbbell, label: 'Treinos' },

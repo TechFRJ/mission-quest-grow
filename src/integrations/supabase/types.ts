@@ -201,6 +201,51 @@ export type Database = {
         }
         Relationships: []
       }
+      focus_sessions: {
+        Row: {
+          block_label: string | null
+          block_type: string
+          completed: boolean
+          created_at: string
+          duration_seconds: number
+          ended_at: string | null
+          id: string
+          notes: string | null
+          notion_note_url: string | null
+          started_at: string
+          target_seconds: number
+          user_id: string
+        }
+        Insert: {
+          block_label?: string | null
+          block_type?: string
+          completed?: boolean
+          created_at?: string
+          duration_seconds?: number
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          notion_note_url?: string | null
+          started_at?: string
+          target_seconds?: number
+          user_id: string
+        }
+        Update: {
+          block_label?: string | null
+          block_type?: string
+          completed?: boolean
+          created_at?: string
+          duration_seconds?: number
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          notion_note_url?: string | null
+          started_at?: string
+          target_seconds?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       mission_streaks: {
         Row: {
           created_at: string
