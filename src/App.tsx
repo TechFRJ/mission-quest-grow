@@ -81,6 +81,7 @@ function AppRoutes() {
       <Route path="/diet" element={<ProtectedRoute><AppLayout><DietPage /></AppLayout></ProtectedRoute>} />
       <Route path="/goals" element={<ProtectedRoute><AppLayout><GoalsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/finance" element={<ProtectedRoute><AppLayout><FinancePage /></AppLayout></ProtectedRoute>} />
+      <Route path="/focus" element={<ProtectedRoute><AppLayout><FocusPage /></AppLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
