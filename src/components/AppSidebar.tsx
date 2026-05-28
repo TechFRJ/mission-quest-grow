@@ -10,16 +10,9 @@ import { useGame } from '@/contexts/GameContext';
 import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
-  { path: '/', icon: Home, label: 'Dashboard' },
-  { path: '/focus', icon: Brain, label: 'Foco APEX' },
-  { path: '/missions', icon: Target, label: 'Missões' },
-  { path: '/goals', icon: Crosshair, label: 'Metas' },
-  { path: '/workouts', icon: Dumbbell, label: 'Treinos' },
-  { path: '/diet', icon: Apple, label: 'Dieta' },
-  { path: '/finance', icon: Wallet, label: 'Finanças' },
-  { path: '/shop', icon: ShoppingBag, label: 'Loja' },
-  { path: '/profile', icon: User, label: 'Perfil' },
+  { path: '/', icon: Brain, label: 'Foco APEX' },
 ];
+
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
