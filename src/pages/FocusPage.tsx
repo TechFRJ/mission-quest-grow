@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Play, Pause, Square, RotateCcw, Brain, Code2, Globe2,
   Languages, BookOpen, Crosshair, Flame, Clock, TrendingUp,
-  CheckCircle2, X,
+  CheckCircle2, X, FileDown,
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -32,7 +34,20 @@ const APEX_BLOCKS: {
 
 const BLOCK_BY_TYPE = Object.fromEntries(APEX_BLOCKS.map(b => [b.type, b])) as Record<BlockType, typeof APEX_BLOCKS[number]>;
 
+const STORAGE_KEY = 'apex_focus_session_v1';
+
+type PersistedSession = {
+  blockType: BlockType;
+  targetSec: number;
+  startEpoch: number;          // ms — when timer originally started
+  pausedSince: number | null;  // ms — null if running
+  accumulatedPausedMs: number; // total paused time
+  notes: string;
+  notionUrl: string;
+};
+
 const formatHMS = (s: number) => {
+  s = Math.max(0, Math.floor(s));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
@@ -43,89 +58,120 @@ const formatHMS = (s: number) => {
 
 const formatHours = (s: number) => `${(s / 3600).toFixed(1)}h`;
 
+const computeElapsed = (s: PersistedSession): number => {
+  const now = Date.now();
+  const paused = s.accumulatedPausedMs + (s.pausedSince ? now - s.pausedSince : 0);
+  return Math.max(0, Math.floor((now - s.startEpoch - paused) / 1000));
+};
+
 export default function FocusPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
 
-  // ---- Active session state (in-memory) ----
-  const [activeBlock, setActiveBlock] = useState<BlockType | null>(null);
+  // ---- Persistent session state ----
+  const [session, setSession] = useState<PersistedSession | null>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as PersistedSession) : null;
+    } catch { return null; }
+  });
+  const [elapsedSec, setElapsedSec] = useState(() => (session ? computeElapsed(session) : 0));
   const [customMinutes, setCustomMinutes] = useState(25);
-  const [targetSec, setTargetSec] = useState(0);
-  const [elapsedSec, setElapsedSec] = useState(0);
-  const [running, setRunning] = useState(false);
-  const [startedAt, setStartedAt] = useState<Date | null>(null);
-  const [notes, setNotes] = useState('');
-  const [notionUrl, setNotionUrl] = useState('');
-  const intervalRef = useRef<number | null>(null);
+  const completedFiredRef = useRef(false);
 
-  // Ticker
+  // Persist on every session change
   useEffect(() => {
-    if (!running) return;
-    intervalRef.current = window.setInterval(() => {
-      setElapsedSec(s => {
-        const next = s + 1;
-        if (next >= targetSec && targetSec > 0) {
-          setRunning(false);
-          confetti({ particleCount: 120, spread: 70, origin: { y: 0.5 } });
-          toast.success('Sessão completa! Salve e ganhe XP.');
-          return targetSec;
-        }
-        return next;
-      });
-    }, 1000);
-    return () => {
-      if (intervalRef.current) window.clearInterval(intervalRef.current);
+    if (session) localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    else localStorage.removeItem(STORAGE_KEY);
+  }, [session]);
+
+  // Ticker — recomputes from epoch so it survives reload / leaving the app
+  useEffect(() => {
+    if (!session) return;
+    const tick = () => {
+      const e = computeElapsed(session);
+      setElapsedSec(e);
+      if (e >= session.targetSec && !completedFiredRef.current && !session.pausedSince) {
+        completedFiredRef.current = true;
+        confetti({ particleCount: 120, spread: 70, origin: { y: 0.5 } });
+        toast.success('Sessão completa! Salve e ganhe XP.');
+      }
     };
-  }, [running, targetSec]);
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [session]);
+
+  // Refresh when tab becomes visible again
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === 'visible' && session) {
+        setElapsedSec(computeElapsed(session));
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [session]);
 
   const startBlock = (type: BlockType, overrideMin?: number) => {
     const block = BLOCK_BY_TYPE[type];
     const mins = overrideMin ?? block.minutes;
-    setActiveBlock(type);
-    setTargetSec(mins * 60);
-    setElapsedSec(0);
-    setStartedAt(new Date());
-    setRunning(true);
-    setNotes('');
-    setNotionUrl('');
+    completedFiredRef.current = false;
+    setSession({
+      blockType: type,
+      targetSec: mins * 60,
+      startEpoch: Date.now(),
+      pausedSince: null,
+      accumulatedPausedMs: 0,
+      notes: '',
+      notionUrl: '',
+    });
   };
 
-  const togglePause = () => setRunning(r => !r);
+  const togglePause = () => {
+    setSession(s => {
+      if (!s) return s;
+      if (s.pausedSince) {
+        // resume
+        return { ...s, accumulatedPausedMs: s.accumulatedPausedMs + (Date.now() - s.pausedSince), pausedSince: null };
+      }
+      return { ...s, pausedSince: Date.now() };
+    });
+  };
 
   const reset = () => {
-    setRunning(false);
+    completedFiredRef.current = false;
+    setSession(s => s ? { ...s, startEpoch: Date.now(), pausedSince: null, accumulatedPausedMs: 0 } : s);
     setElapsedSec(0);
-    setStartedAt(new Date());
   };
 
   const abandon = () => {
-    setActiveBlock(null);
-    setRunning(false);
+    completedFiredRef.current = false;
+    setSession(null);
     setElapsedSec(0);
-    setStartedAt(null);
-    setTargetSec(0);
-    setNotes('');
-    setNotionUrl('');
   };
 
+  const updateNotes = (notes: string) => setSession(s => s ? { ...s, notes } : s);
+  const updateNotionUrl = (notionUrl: string) => setSession(s => s ? { ...s, notionUrl } : s);
+
   const saveSession = async () => {
-    if (!user || !activeBlock || elapsedSec < 30) {
+    if (!user || !session || elapsedSec < 30) {
       toast.error('Sessão muito curta para registrar (mín. 30s).');
       return;
     }
-    const block = BLOCK_BY_TYPE[activeBlock];
-    const completed = elapsedSec >= targetSec;
+    const block = BLOCK_BY_TYPE[session.blockType];
+    const completed = elapsedSec >= session.targetSec;
     const { error } = await supabase.from('focus_sessions').insert({
       user_id: user.id,
-      block_type: activeBlock,
+      block_type: session.blockType,
       block_label: block.label,
-      target_seconds: targetSec,
+      target_seconds: session.targetSec,
       duration_seconds: elapsedSec,
-      started_at: (startedAt ?? new Date()).toISOString(),
+      started_at: new Date(session.startEpoch).toISOString(),
       ended_at: new Date().toISOString(),
       completed,
-      notes: notes || null,
-      notion_note_url: notionUrl || null,
+      notes: session.notes || null,
+      notion_note_url: session.notionUrl || null,
     });
     if (error) {
       toast.error('Erro ao salvar: ' + error.message);
@@ -142,7 +188,7 @@ export default function FocusPage() {
     enabled: !!user,
     queryFn: async () => {
       const since = new Date();
-      since.setDate(since.getDate() - 30);
+      since.setDate(since.getDate() - 90);
       const { data, error } = await supabase
         .from('focus_sessions')
         .select('*')
@@ -173,7 +219,6 @@ export default function FocusPage() {
       if (dayDiff >= 0 && dayDiff < 7) last7[6 - dayDiff] += s.duration_seconds;
     }
 
-    // streak: consecutive days with any focus session
     let streak = 0;
     const days = new Set(sessions.map(s => new Date(s.started_at).toDateString()));
     const cur = new Date(); cur.setHours(0,0,0,0);
@@ -185,39 +230,141 @@ export default function FocusPage() {
     return { today, week, weekCount, perBlock, last7, streak };
   }, [sessions]);
 
+  // ---- PDF report ----
+  const generatePDF = useCallback(() => {
+    if (sessions.length === 0) {
+      toast.error('Sem sessões registradas ainda.');
+      return;
+    }
+    const doc = new jsPDF();
+    const now = new Date();
+
+    // Header
+    doc.setFillColor(15, 15, 25);
+    doc.rect(0, 0, 210, 32, 'F');
+    doc.setTextColor(167, 139, 250);
+    doc.setFontSize(10);
+    doc.text('PROTOCOLO APEX', 14, 12);
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.text('Relatório de Foco Profundo', 14, 22);
+    doc.setFontSize(9);
+    doc.setTextColor(180, 180, 200);
+    doc.text(`Gerado em ${now.toLocaleString('pt-BR')}`, 14, 28);
+
+    // Summary
+    const total = sessions.reduce((a, s) => a + s.duration_seconds, 0);
+    const completedCount = sessions.filter(s => s.completed).length;
+    doc.setTextColor(20, 20, 20);
+    doc.setFontSize(12);
+    doc.text('Resumo', 14, 44);
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    const summary = [
+      `Total estudado: ${formatHours(total)} (${sessions.length} sessões)`,
+      `Sessões completas: ${completedCount}`,
+      `Hoje: ${formatHours(stats.today)}  ·  Esta semana: ${formatHours(stats.week)}`,
+      `Streak atual: ${stats.streak} dia(s)`,
+    ];
+    summary.forEach((t, i) => doc.text(t, 14, 52 + i * 6));
+
+    // Per-block breakdown
+    autoTable(doc, {
+      startY: 82,
+      head: [['Matéria / Bloco', 'Sessões', 'Horas']],
+      body: APEX_BLOCKS.map(b => {
+        const blockSessions = sessions.filter(s => s.block_type === b.type);
+        const totalSec = blockSessions.reduce((a, s) => a + s.duration_seconds, 0);
+        return [b.label, String(blockSessions.length), formatHours(totalSec)];
+      }).filter(r => r[1] !== '0'),
+      headStyles: { fillColor: [124, 58, 237], textColor: 255 },
+      styles: { fontSize: 10 },
+    });
+
+    // Sessions table
+    const afterY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.setTextColor(20, 20, 20);
+    doc.text('Histórico de Sessões', 14, afterY);
+
+    autoTable(doc, {
+      startY: afterY + 4,
+      head: [['Data', 'Matéria', 'Duração', 'Status', 'Notas']],
+      body: sessions.map(s => {
+        const d = new Date(s.started_at);
+        const meta = BLOCK_BY_TYPE[s.block_type as BlockType] ?? BLOCK_BY_TYPE.livre;
+        return [
+          d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }),
+          meta.label,
+          formatHMS(s.duration_seconds),
+          s.completed ? 'Completa' : 'Parcial',
+          (s.notes || '') + (s.notion_note_url ? `\n${s.notion_note_url}` : ''),
+        ];
+      }),
+      headStyles: { fillColor: [124, 58, 237], textColor: 255 },
+      styles: { fontSize: 8, cellPadding: 2, valign: 'top' },
+      columnStyles: {
+        0: { cellWidth: 28 },
+        1: { cellWidth: 42 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 18 },
+        4: { cellWidth: 'auto' },
+      },
+      didDrawPage: (data) => {
+        const pageStr = `Página ${doc.getNumberOfPages()}`;
+        doc.setFontSize(8);
+        doc.setTextColor(140, 140, 140);
+        doc.text(pageStr, 200, 290, { align: 'right' });
+      },
+    });
+
+    const fname = `apex-relatorio-${now.toISOString().slice(0, 10)}.pdf`;
+    doc.save(fname);
+    toast.success('Relatório gerado.');
+  }, [sessions, stats]);
+
+  const targetSec = session?.targetSec ?? 0;
   const progress = targetSec > 0 ? (elapsedSec / targetSec) * 100 : 0;
-  const activeMeta = activeBlock ? BLOCK_BY_TYPE[activeBlock] : null;
+  const activeMeta = session ? BLOCK_BY_TYPE[session.blockType] : null;
+  const isRunning = session && !session.pausedSince;
 
   return (
     <div className="min-h-screen pb-safe">
       <main className="container px-4 md:px-6 py-6 space-y-6 max-w-5xl mx-auto">
         {/* Header */}
-        <header className="flex items-end justify-between">
+        <header className="flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-mono">Protocolo APEX</p>
             <h1 className="text-2xl md:text-3xl font-display font-bold tracking-tight">Foco Profundo</h1>
             <p className="text-sm text-muted-foreground mt-1">Sem celular. Sem notificação. Só execução.</p>
           </div>
-          {stats.streak > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--streak)/0.1)] border border-[hsl(var(--streak)/0.2)]">
-              <Flame className="w-4 h-4 text-[hsl(var(--streak))]" />
-              <span className="font-mono font-bold text-sm text-[hsl(var(--streak))]">{stats.streak}d</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {stats.streak > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--streak)/0.1)] border border-[hsl(var(--streak)/0.2)]">
+                <Flame className="w-4 h-4 text-[hsl(var(--streak))]" />
+                <span className="font-mono font-bold text-sm text-[hsl(var(--streak))]">{stats.streak}d</span>
+              </div>
+            )}
+            <button
+              onClick={generatePDF}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition text-xs font-mono uppercase tracking-wider"
+              title="Gerar relatório PDF"
+            >
+              <FileDown className="w-4 h-4" />
+              Relatório PDF
+            </button>
+          </div>
         </header>
 
         {/* ACTIVE SESSION ----------------------------------------- */}
-        {activeBlock && activeMeta && (
+        {session && activeMeta && (
           <section
             className="relative rounded-2xl border border-primary/30 bg-card overflow-hidden"
             style={{ boxShadow: `0 0 80px -20px hsl(${activeMeta.hue} / 0.4)` }}
           >
-            {/* glow bg */}
             <div
               className="absolute inset-0 opacity-30 pointer-events-none"
-              style={{
-                background: `radial-gradient(circle at 50% 0%, hsl(${activeMeta.hue} / 0.3), transparent 70%)`,
-              }}
+              style={{ background: `radial-gradient(circle at 50% 0%, hsl(${activeMeta.hue} / 0.3), transparent 70%)` }}
             />
 
             <div className="relative p-6 md:p-8 space-y-6">
@@ -230,7 +377,9 @@ export default function FocusPage() {
                     <activeMeta.icon className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono">Sessão ativa</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono">
+                      Sessão ativa {!isRunning && '· pausada'}
+                    </p>
                     <h2 className="text-base md:text-lg font-semibold truncate">{activeMeta.label}</h2>
                   </div>
                 </div>
@@ -243,7 +392,6 @@ export default function FocusPage() {
                 </button>
               </div>
 
-              {/* Timer */}
               <div className="flex flex-col items-center py-4">
                 <div
                   className="text-6xl md:text-7xl font-mono font-bold tracking-tighter tabular-nums"
@@ -255,7 +403,6 @@ export default function FocusPage() {
                   {formatHMS(elapsedSec)} / {formatHMS(targetSec)} · {Math.round(progress)}%
                 </p>
 
-                {/* progress ring/bar */}
                 <div className="w-full max-w-md mt-5 h-1.5 rounded-full bg-muted overflow-hidden">
                   <div
                     className="h-full transition-all duration-500"
@@ -268,7 +415,6 @@ export default function FocusPage() {
                 </div>
               </div>
 
-              {/* Controls */}
               <div className="flex items-center justify-center gap-3">
                 <button
                   onClick={reset}
@@ -286,7 +432,7 @@ export default function FocusPage() {
                     boxShadow: `0 0 30px hsl(${activeMeta.hue} / 0.5)`,
                   }}
                 >
-                  {running ? <><Pause className="w-4 h-4" /> Pausar</> : <><Play className="w-4 h-4" /> Continuar</>}
+                  {isRunning ? <><Pause className="w-4 h-4" /> Pausar</> : <><Play className="w-4 h-4" /> Continuar</>}
                 </button>
                 <button
                   onClick={saveSession}
@@ -298,21 +444,20 @@ export default function FocusPage() {
                 </button>
               </div>
 
-              {/* Notion-style notes */}
               <div className="space-y-2 pt-4 border-t border-border/60">
                 <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">
                   Nota do estudo (regra APEX nº 2)
                 </label>
                 <textarea
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
+                  value={session.notes}
+                  onChange={e => updateNotes(e.target.value)}
                   placeholder="O que aprendeu (suas palavras), código que VOCÊ escreveu, 1 dúvida que ficou..."
                   rows={3}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-primary/50"
                 />
                 <input
-                  value={notionUrl}
-                  onChange={e => setNotionUrl(e.target.value)}
+                  value={session.notionUrl}
+                  onChange={e => updateNotionUrl(e.target.value)}
                   placeholder="Link da nota no Notion (opcional)"
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-primary/50"
                 />
@@ -322,17 +467,15 @@ export default function FocusPage() {
         )}
 
         {/* BLOCK PICKER ----------------------------------------- */}
-        {!activeBlock && (
+        {!session && (
           <>
-            {/* Stats strip */}
             <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <StatTile icon={Clock}      label="Hoje"            value={formatHours(stats.today)}      hue="262 83% 65%" />
-              <StatTile icon={TrendingUp} label="Esta semana"     value={formatHours(stats.week)}       hue="199 89% 55%" />
-              <StatTile icon={CheckCircle2} label="Sessões/semana" value={String(stats.weekCount)}      hue="142 71% 50%" />
-              <StatTile icon={Flame}      label="Streak de foco"  value={stats.streak ? `${stats.streak}d` : '—'} hue="38 92% 55%" />
+              <StatTile icon={Clock}        label="Hoje"            value={formatHours(stats.today)} hue="262 83% 65%" />
+              <StatTile icon={TrendingUp}   label="Esta semana"     value={formatHours(stats.week)}  hue="199 89% 55%" />
+              <StatTile icon={CheckCircle2} label="Sessões/semana"  value={String(stats.weekCount)}  hue="142 71% 50%" />
+              <StatTile icon={Flame}        label="Streak de foco"  value={stats.streak ? `${stats.streak}d` : '—'} hue="38 92% 55%" />
             </section>
 
-            {/* Last 7 days chart */}
             <section className="bg-card border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold">Últimos 7 dias</h3>
@@ -363,7 +506,6 @@ export default function FocusPage() {
               </div>
             </section>
 
-            {/* APEX Blocks */}
             <section>
               <div className="flex items-center justify-between mb-3">
                 <div>
@@ -424,7 +566,6 @@ export default function FocusPage() {
               </div>
             </section>
 
-            {/* History */}
             {sessions.length > 0 && (
               <section>
                 <h2 className="text-base font-semibold mb-3">Histórico recente</h2>
