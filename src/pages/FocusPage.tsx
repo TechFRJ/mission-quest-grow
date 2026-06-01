@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Play, Pause, Square, RotateCcw, Brain, Code2, Globe2,
   Languages, BookOpen, Crosshair, Flame, Clock, TrendingUp,
-  CheckCircle2, X, FileDown,
+  CheckCircle2, X, FileDown, PlusCircle,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -77,6 +77,13 @@ export default function FocusPage() {
   });
   const [elapsedSec, setElapsedSec] = useState(() => (session ? computeElapsed(session) : 0));
   const [customMinutes, setCustomMinutes] = useState(25);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualBlock, setManualBlock] = useState<BlockType>('faculdade');
+  const [manualDate, setManualDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [manualMinutes, setManualMinutes] = useState(60);
+  const [manualNotes, setManualNotes] = useState('');
+  const [manualUrl, setManualUrl] = useState('');
+  const [manualSaving, setManualSaving] = useState(false);
   const completedFiredRef = useRef(false);
 
   // Persist on every session change
@@ -180,6 +187,44 @@ export default function FocusPage() {
     toast.success(`+${Math.round(elapsedSec / 60)}min registrados em ${block.label}`);
     qc.invalidateQueries({ queryKey: ['focus_sessions'] });
     abandon();
+  };
+
+  const saveManual = async () => {
+    if (!user) return;
+    if (manualMinutes < 1) {
+      toast.error('Informe pelo menos 1 minuto.');
+      return;
+    }
+    setManualSaving(true);
+    const block = BLOCK_BY_TYPE[manualBlock];
+    const seconds = Math.round(manualMinutes * 60);
+    // Use noon local time on the chosen date so day grouping is unambiguous
+    const startedAt = new Date(`${manualDate}T12:00:00`);
+    const endedAt = new Date(startedAt.getTime() + seconds * 1000);
+    const { error } = await supabase.from('focus_sessions').insert({
+      user_id: user.id,
+      block_type: manualBlock,
+      block_label: block.label,
+      target_seconds: seconds,
+      duration_seconds: seconds,
+      started_at: startedAt.toISOString(),
+      ended_at: endedAt.toISOString(),
+      completed: true,
+      notes: manualNotes || null,
+      notion_note_url: manualUrl || null,
+    });
+    setManualSaving(false);
+    if (error) {
+      toast.error('Erro ao registrar: ' + error.message);
+      return;
+    }
+    toast.success(`+${manualMinutes}min registrados em ${block.label}`);
+    confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+    qc.invalidateQueries({ queryKey: ['focus_sessions'] });
+    setManualOpen(false);
+    setManualNotes('');
+    setManualUrl('');
+    setManualMinutes(60);
   };
 
   // ---- History query ----
@@ -345,6 +390,14 @@ export default function FocusPage() {
                 <span className="font-mono font-bold text-sm text-[hsl(var(--streak))]">{stats.streak}d</span>
               </div>
             )}
+            <button
+              onClick={() => setManualOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-success/40 text-success hover:bg-success/10 transition text-xs font-mono uppercase tracking-wider"
+              title="Registrar sessão manualmente"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Registrar
+            </button>
             <button
               onClick={generatePDF}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition text-xs font-mono uppercase tracking-wider"
@@ -602,6 +655,108 @@ export default function FocusPage() {
           </>
         )}
       </main>
+
+      {/* MANUAL LOG MODAL ----------------------------------------- */}
+      {manualOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => !manualSaving && setManualOpen(false)}
+        >
+          <div
+            className="w-full md:max-w-md bg-card border border-border md:rounded-2xl rounded-t-2xl p-5 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-mono">Protocolo APEX</p>
+                <h3 className="text-lg font-semibold">Registrar sessão</h3>
+              </div>
+              <button
+                onClick={() => !manualSaving && setManualOpen(false)}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Matéria</label>
+              <div className="grid grid-cols-2 gap-2">
+                {APEX_BLOCKS.map(b => (
+                  <button
+                    key={b.type}
+                    onClick={() => setManualBlock(b.type)}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-2 rounded-lg border text-left text-xs transition',
+                      manualBlock === b.type ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'
+                    )}
+                  >
+                    <b.icon className="w-4 h-4 shrink-0" style={{ color: `hsl(${b.hue})` }} />
+                    <span className="truncate font-medium">{b.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Dia</label>
+                <input
+                  type="date"
+                  value={manualDate}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={e => setManualDate(e.target.value)}
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/50"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Minutos</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={600}
+                  value={manualMinutes}
+                  onChange={e => setManualMinutes(Math.max(1, Math.min(600, +e.target.value || 0)))}
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary/50"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Nota (opcional)</label>
+              <textarea
+                value={manualNotes}
+                onChange={e => setManualNotes(e.target.value)}
+                rows={3}
+                placeholder="O que estudou, código que escreveu, dúvida que ficou..."
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-primary/50"
+              />
+              <input
+                value={manualUrl}
+                onChange={e => setManualUrl(e.target.value)}
+                placeholder="Link da nota no Notion (opcional)"
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-primary/50"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => !manualSaving && setManualOpen(false)}
+                className="flex-1 h-11 rounded-xl border border-border text-sm font-medium hover:bg-muted/40 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={saveManual}
+                disabled={manualSaving}
+                className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
+              >
+                {manualSaving ? 'Salvando...' : 'Registrar sessão'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
