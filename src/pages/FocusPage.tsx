@@ -77,6 +77,13 @@ export default function FocusPage() {
   });
   const [elapsedSec, setElapsedSec] = useState(() => (session ? computeElapsed(session) : 0));
   const [customMinutes, setCustomMinutes] = useState(25);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualBlock, setManualBlock] = useState<BlockType>('faculdade');
+  const [manualDate, setManualDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [manualMinutes, setManualMinutes] = useState(60);
+  const [manualNotes, setManualNotes] = useState('');
+  const [manualUrl, setManualUrl] = useState('');
+  const [manualSaving, setManualSaving] = useState(false);
   const completedFiredRef = useRef(false);
 
   // Persist on every session change
