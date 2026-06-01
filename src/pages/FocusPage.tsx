@@ -189,6 +189,44 @@ export default function FocusPage() {
     abandon();
   };
 
+  const saveManual = async () => {
+    if (!user) return;
+    if (manualMinutes < 1) {
+      toast.error('Informe pelo menos 1 minuto.');
+      return;
+    }
+    setManualSaving(true);
+    const block = BLOCK_BY_TYPE[manualBlock];
+    const seconds = Math.round(manualMinutes * 60);
+    // Use noon local time on the chosen date so day grouping is unambiguous
+    const startedAt = new Date(`${manualDate}T12:00:00`);
+    const endedAt = new Date(startedAt.getTime() + seconds * 1000);
+    const { error } = await supabase.from('focus_sessions').insert({
+      user_id: user.id,
+      block_type: manualBlock,
+      block_label: block.label,
+      target_seconds: seconds,
+      duration_seconds: seconds,
+      started_at: startedAt.toISOString(),
+      ended_at: endedAt.toISOString(),
+      completed: true,
+      notes: manualNotes || null,
+      notion_note_url: manualUrl || null,
+    });
+    setManualSaving(false);
+    if (error) {
+      toast.error('Erro ao registrar: ' + error.message);
+      return;
+    }
+    toast.success(`+${manualMinutes}min registrados em ${block.label}`);
+    confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+    qc.invalidateQueries({ queryKey: ['focus_sessions'] });
+    setManualOpen(false);
+    setManualNotes('');
+    setManualUrl('');
+    setManualMinutes(60);
+  };
+
   // ---- History query ----
   const { data: sessions = [] } = useQuery({
     queryKey: ['focus_sessions', user?.id],
