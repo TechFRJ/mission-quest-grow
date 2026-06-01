@@ -655,6 +655,108 @@ export default function FocusPage() {
           </>
         )}
       </main>
+
+      {/* MANUAL LOG MODAL ----------------------------------------- */}
+      {manualOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => !manualSaving && setManualOpen(false)}
+        >
+          <div
+            className="w-full md:max-w-md bg-card border border-border md:rounded-2xl rounded-t-2xl p-5 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-mono">Protocolo APEX</p>
+                <h3 className="text-lg font-semibold">Registrar sessão</h3>
+              </div>
+              <button
+                onClick={() => !manualSaving && setManualOpen(false)}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Matéria</label>
+              <div className="grid grid-cols-2 gap-2">
+                {APEX_BLOCKS.map(b => (
+                  <button
+                    key={b.type}
+                    onClick={() => setManualBlock(b.type)}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-2 rounded-lg border text-left text-xs transition',
+                      manualBlock === b.type ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'
+                    )}
+                  >
+                    <b.icon className="w-4 h-4 shrink-0" style={{ color: `hsl(${b.hue})` }} />
+                    <span className="truncate font-medium">{b.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Dia</label>
+                <input
+                  type="date"
+                  value={manualDate}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={e => setManualDate(e.target.value)}
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/50"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Minutos</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={600}
+                  value={manualMinutes}
+                  onChange={e => setManualMinutes(Math.max(1, Math.min(600, +e.target.value || 0)))}
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary/50"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Nota (opcional)</label>
+              <textarea
+                value={manualNotes}
+                onChange={e => setManualNotes(e.target.value)}
+                rows={3}
+                placeholder="O que estudou, código que escreveu, dúvida que ficou..."
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-primary/50"
+              />
+              <input
+                value={manualUrl}
+                onChange={e => setManualUrl(e.target.value)}
+                placeholder="Link da nota no Notion (opcional)"
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-primary/50"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => !manualSaving && setManualOpen(false)}
+                className="flex-1 h-11 rounded-xl border border-border text-sm font-medium hover:bg-muted/40 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={saveManual}
+                disabled={manualSaving}
+                className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
+              >
+                {manualSaving ? 'Salvando...' : 'Registrar sessão'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
