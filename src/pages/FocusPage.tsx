@@ -391,6 +391,14 @@ export default function FocusPage() {
               </div>
             )}
             <button
+              onClick={() => setManualOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-success/40 text-success hover:bg-success/10 transition text-xs font-mono uppercase tracking-wider"
+              title="Registrar sessão manualmente"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Registrar
+            </button>
+            <button
               onClick={generatePDF}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition text-xs font-mono uppercase tracking-wider"
               title="Gerar relatório PDF"
