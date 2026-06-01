@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Play, Pause, Square, RotateCcw, Brain, Code2, Globe2,
   Languages, BookOpen, Crosshair, Flame, Clock, TrendingUp,
-  CheckCircle2, X, FileDown,
+  CheckCircle2, X, FileDown, PlusCircle,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
