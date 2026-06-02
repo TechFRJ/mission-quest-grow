@@ -78,7 +78,8 @@ const splitIntervalByLocalDay = (startEpoch: number, endEpoch: number) => {
 
 const getActiveIntervals = (s: PersistedSession, referenceEpoch = Date.now()) => {
   if (!s.pauseSegments) {
-    const elapsedSec = Math.min(s.targetSec, Math.max(0, Math.floor((referenceEpoch - s.startEpoch - s.accumulatedPausedMs) / 1000)));
+    const pausedMs = s.accumulatedPausedMs + (s.pausedSince ? referenceEpoch - s.pausedSince : 0);
+    const elapsedSec = Math.min(s.targetSec, Math.max(0, Math.floor((referenceEpoch - s.startEpoch - pausedMs) / 1000)));
     return elapsedSec > 0 ? [{ startEpoch: s.startEpoch, endEpoch: s.startEpoch + elapsedSec * 1000 }] : [];
   }
 
