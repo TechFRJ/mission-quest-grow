@@ -240,24 +240,37 @@ export default function FocusPage() {
       return;
     }
     const block = BLOCK_BY_TYPE[session.blockType];
+    const saveEpoch = Date.now();
     const completed = elapsedSec >= session.targetSec;
-    const { error } = await supabase.from('focus_sessions').insert({
-      user_id: user.id,
-      block_type: session.blockType,
-      block_label: block.label,
-      target_seconds: session.targetSec,
-      duration_seconds: elapsedSec,
-      started_at: new Date(session.startEpoch).toISOString(),
-      ended_at: new Date().toISOString(),
-      completed,
-      notes: session.notes || null,
-      notion_note_url: session.notionUrl || null,
-    });
+    const dailySegments = getActiveIntervals(session, saveEpoch).flatMap(interval =>
+      splitIntervalByLocalDay(interval.startEpoch, interval.endEpoch)
+    );
+    const totalSegmentSeconds = dailySegments.reduce((sum, segment) => sum + segment.durationSec, 0);
+
+    if (totalSegmentSeconds < 30) {
+      toast.error('Sessão muito curta para registrar (mín. 30s).');
+      return;
+    }
+
+    const { error } = await supabase.from('focus_sessions').insert(
+      dailySegments.map((segment, index) => ({
+        user_id: user.id,
+        block_type: session.blockType,
+        block_label: block.label,
+        target_seconds: dailySegments.length === 1 ? session.targetSec : segment.durationSec,
+        duration_seconds: segment.durationSec,
+        started_at: segment.startedAt.toISOString(),
+        ended_at: segment.endedAt.toISOString(),
+        completed: dailySegments.length === 1 ? completed : true,
+        notes: index === dailySegments.length - 1 ? session.notes || null : null,
+        notion_note_url: index === dailySegments.length - 1 ? session.notionUrl || null : null,
+      }))
+    );
     if (error) {
       toast.error('Erro ao salvar: ' + error.message);
       return;
     }
-    toast.success(`+${Math.round(elapsedSec / 60)}min registrados em ${block.label}`);
+    toast.success(`+${Math.round(totalSegmentSeconds / 60)}min registrados em ${block.label}`);
     qc.invalidateQueries({ queryKey: ['focus_sessions'] });
     abandon();
   };
