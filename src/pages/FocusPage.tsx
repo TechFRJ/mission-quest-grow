@@ -534,9 +534,10 @@ export default function FocusPage() {
                   </div>
                 </div>
                 <button
-                  onClick={abandon}
-                  className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition"
-                  title="Descartar sessão"
+                  onClick={saveSession}
+                  disabled={sessionSaving}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-success hover:bg-success/10 transition disabled:opacity-50 disabled:cursor-wait"
+                  title="Fechar e registrar sessão"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -586,7 +587,7 @@ export default function FocusPage() {
                 </button>
                 <button
                   onClick={saveSession}
-                  disabled={elapsedSec < 30}
+                  disabled={elapsedSec < 1 || sessionSaving}
                   className="w-11 h-11 rounded-xl border border-success/40 text-success hover:bg-success/10 flex items-center justify-center transition disabled:opacity-30 disabled:cursor-not-allowed"
                   title="Salvar sessão"
                 >
