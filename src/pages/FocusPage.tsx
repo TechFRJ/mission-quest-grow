@@ -192,8 +192,11 @@ export default function FocusPage() {
       blockType: type,
       targetSec: mins * 60,
       startEpoch: Date.now(),
+      startDateKey: getLocalDateKey(),
       pausedSince: null,
       accumulatedPausedMs: 0,
+      pauseSegments: [],
+      completedAtEpoch: null,
       notes: '',
       notionUrl: '',
     });
@@ -204,7 +207,13 @@ export default function FocusPage() {
       if (!s) return s;
       if (s.pausedSince) {
         // resume
-        return { ...s, accumulatedPausedMs: s.accumulatedPausedMs + (Date.now() - s.pausedSince), pausedSince: null };
+        const now = Date.now();
+        return {
+          ...s,
+          accumulatedPausedMs: s.accumulatedPausedMs + (now - s.pausedSince),
+          pauseSegments: [...(s.pauseSegments ?? []), { startEpoch: s.pausedSince, endEpoch: now }],
+          pausedSince: null,
+        };
       }
       return { ...s, pausedSince: Date.now() };
     });
@@ -212,7 +221,7 @@ export default function FocusPage() {
 
   const reset = () => {
     completedFiredRef.current = false;
-    setSession(s => s ? { ...s, startEpoch: Date.now(), pausedSince: null, accumulatedPausedMs: 0 } : s);
+    setSession(s => s ? { ...s, startEpoch: Date.now(), startDateKey: getLocalDateKey(), pausedSince: null, accumulatedPausedMs: 0, pauseSegments: [], completedAtEpoch: null } : s);
     setElapsedSec(0);
   };
 
