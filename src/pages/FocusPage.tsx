@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Play, Pause, Square, RotateCcw, Brain, Code2, Globe2,
   Languages, BookOpen, Crosshair, Flame, Clock, TrendingUp,
-  CheckCircle2, X, FileDown, PlusCircle,
+  CheckCircle2, X, FileDown, PlusCircle, type LucideIcon,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -21,7 +21,7 @@ const APEX_BLOCKS: {
   label: string;
   desc: string;
   minutes: number;
-  icon: any;
+  icon: LucideIcon;
   hue: string;
 }[] = [
   { type: 'faculdade', label: 'Faculdade Anhanguera', desc: 'Bloco 1 · Engenharia de Software',     minutes: 90, icon: Brain,     hue: '262 83% 65%' },
@@ -414,7 +414,7 @@ export default function FocusPage() {
     });
 
     // Sessions table
-    const afterY = (doc as any).lastAutoTable.finalY + 10;
+    const afterY = ((doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 82) + 10;
     doc.setFontSize(12);
     doc.setTextColor(20, 20, 20);
     doc.text('Histórico de Sessões', 14, afterY);
@@ -848,7 +848,7 @@ export default function FocusPage() {
   );
 }
 
-function StatTile({ icon: Icon, label, value, hue }: { icon: any; label: string; value: string; hue: string }) {
+function StatTile({ icon: Icon, label, value, hue }: { icon: LucideIcon; label: string; value: string; hue: string }) {
   return (
     <div className="bg-card border border-border rounded-xl p-3.5">
       <div
