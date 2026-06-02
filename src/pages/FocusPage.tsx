@@ -40,10 +40,75 @@ type PersistedSession = {
   blockType: BlockType;
   targetSec: number;
   startEpoch: number;          // ms — when timer originally started
+  startDateKey?: string;       // local YYYY-MM-DD — preserves the real study day
   pausedSince: number | null;  // ms — null if running
   accumulatedPausedMs: number; // total paused time
+  pauseSegments?: { startEpoch: number; endEpoch: number }[];
+  completedAtEpoch?: number | null;
   notes: string;
   notionUrl: string;
+};
+
+const getLocalDateKey = (date = new Date()) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const splitIntervalByLocalDay = (startEpoch: number, endEpoch: number) => {
+  const segments: { startedAt: Date; endedAt: Date; durationSec: number }[] = [];
+  let cursor = startEpoch;
+
+  while (cursor < endEpoch) {
+    const nextMidnight = new Date(cursor);
+    nextMidnight.setHours(24, 0, 0, 0);
+    const segmentEnd = Math.min(endEpoch, nextMidnight.getTime());
+    const durationSec = Math.max(0, Math.round((segmentEnd - cursor) / 1000));
+
+    if (durationSec > 0) {
+      segments.push({ startedAt: new Date(cursor), endedAt: new Date(segmentEnd), durationSec });
+    }
+
+    cursor = segmentEnd;
+  }
+
+  return segments;
+};
+
+const getActiveIntervals = (s: PersistedSession, referenceEpoch = Date.now()) => {
+  if (!s.pauseSegments) {
+    const elapsedSec = Math.min(s.targetSec, Math.max(0, Math.floor((referenceEpoch - s.startEpoch - s.accumulatedPausedMs) / 1000)));
+    return elapsedSec > 0 ? [{ startEpoch: s.startEpoch, endEpoch: s.startEpoch + elapsedSec * 1000 }] : [];
+  }
+
+  const pauses = [...s.pauseSegments];
+  if (s.pausedSince) pauses.push({ startEpoch: s.pausedSince, endEpoch: referenceEpoch });
+  pauses.sort((a, b) => a.startEpoch - b.startEpoch);
+
+  const intervals: { startEpoch: number; endEpoch: number }[] = [];
+  let activeStart = s.startEpoch;
+
+  for (const pause of pauses) {
+    const pauseStart = Math.max(pause.startEpoch, s.startEpoch);
+    const pauseEnd = Math.max(pause.endEpoch, pauseStart);
+    if (pauseStart > activeStart) intervals.push({ startEpoch: activeStart, endEpoch: pauseStart });
+    activeStart = Math.max(activeStart, pauseEnd);
+  }
+
+  if (referenceEpoch > activeStart) intervals.push({ startEpoch: activeStart, endEpoch: referenceEpoch });
+
+  const capped: { startEpoch: number; endEpoch: number }[] = [];
+  let remainingMs = s.targetSec * 1000;
+  for (const interval of intervals) {
+    if (remainingMs <= 0) break;
+    const durationMs = interval.endEpoch - interval.startEpoch;
+    const usedMs = Math.min(durationMs, remainingMs);
+    if (usedMs > 0) capped.push({ startEpoch: interval.startEpoch, endEpoch: interval.startEpoch + usedMs });
+    remainingMs -= usedMs;
+  }
+
+  return capped;
 };
 
 const formatHMS = (s: number) => {
@@ -59,9 +124,8 @@ const formatHMS = (s: number) => {
 const formatHours = (s: number) => `${(s / 3600).toFixed(1)}h`;
 
 const computeElapsed = (s: PersistedSession): number => {
-  const now = Date.now();
-  const paused = s.accumulatedPausedMs + (s.pausedSince ? now - s.pausedSince : 0);
-  return Math.max(0, Math.floor((now - s.startEpoch - paused) / 1000));
+  const activeMs = getActiveIntervals(s).reduce((total, interval) => total + interval.endEpoch - interval.startEpoch, 0);
+  return Math.min(s.targetSec, Math.max(0, Math.floor(activeMs / 1000)));
 };
 
 export default function FocusPage() {
