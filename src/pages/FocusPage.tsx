@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Play, Pause, Square, RotateCcw, Brain, Code2, Globe2,
   Languages, BookOpen, Crosshair, Flame, Clock, TrendingUp,
-  CheckCircle2, X, FileDown, PlusCircle,
+  CheckCircle2, X, FileDown, PlusCircle, type LucideIcon,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -21,7 +21,7 @@ const APEX_BLOCKS: {
   label: string;
   desc: string;
   minutes: number;
-  icon: any;
+  icon: LucideIcon;
   hue: string;
 }[] = [
   { type: 'faculdade', label: 'Faculdade Anhanguera', desc: 'Bloco 1 · Engenharia de Software',     minutes: 90, icon: Brain,     hue: '262 83% 65%' },
@@ -40,10 +40,76 @@ type PersistedSession = {
   blockType: BlockType;
   targetSec: number;
   startEpoch: number;          // ms — when timer originally started
+  startDateKey?: string;       // local YYYY-MM-DD — preserves the real study day
   pausedSince: number | null;  // ms — null if running
   accumulatedPausedMs: number; // total paused time
+  pauseSegments?: { startEpoch: number; endEpoch: number }[];
+  completedAtEpoch?: number | null;
   notes: string;
   notionUrl: string;
+};
+
+const getLocalDateKey = (date = new Date()) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const splitIntervalByLocalDay = (startEpoch: number, endEpoch: number) => {
+  const segments: { startedAt: Date; endedAt: Date; durationSec: number }[] = [];
+  let cursor = startEpoch;
+
+  while (cursor < endEpoch) {
+    const nextMidnight = new Date(cursor);
+    nextMidnight.setHours(24, 0, 0, 0);
+    const segmentEnd = Math.min(endEpoch, nextMidnight.getTime());
+    const durationSec = Math.max(0, Math.round((segmentEnd - cursor) / 1000));
+
+    if (durationSec > 0) {
+      segments.push({ startedAt: new Date(cursor), endedAt: new Date(segmentEnd), durationSec });
+    }
+
+    cursor = segmentEnd;
+  }
+
+  return segments;
+};
+
+const getActiveIntervals = (s: PersistedSession, referenceEpoch = Date.now()) => {
+  if (!s.pauseSegments) {
+    const pausedMs = s.accumulatedPausedMs + (s.pausedSince ? referenceEpoch - s.pausedSince : 0);
+    const elapsedSec = Math.min(s.targetSec, Math.max(0, Math.floor((referenceEpoch - s.startEpoch - pausedMs) / 1000)));
+    return elapsedSec > 0 ? [{ startEpoch: s.startEpoch, endEpoch: s.startEpoch + elapsedSec * 1000 }] : [];
+  }
+
+  const pauses = [...s.pauseSegments];
+  if (s.pausedSince) pauses.push({ startEpoch: s.pausedSince, endEpoch: referenceEpoch });
+  pauses.sort((a, b) => a.startEpoch - b.startEpoch);
+
+  const intervals: { startEpoch: number; endEpoch: number }[] = [];
+  let activeStart = s.startEpoch;
+
+  for (const pause of pauses) {
+    const pauseStart = Math.max(pause.startEpoch, s.startEpoch);
+    const pauseEnd = Math.max(pause.endEpoch, pauseStart);
+    if (pauseStart > activeStart) intervals.push({ startEpoch: activeStart, endEpoch: pauseStart });
+    activeStart = Math.max(activeStart, pauseEnd);
+  }
+
+  if (referenceEpoch > activeStart) intervals.push({ startEpoch: activeStart, endEpoch: referenceEpoch });
+
+  const capped: { startEpoch: number; endEpoch: number }[] = [];
+  let remainingMs = s.targetSec * 1000;
+  for (const interval of intervals) {
+    if (remainingMs <= 0) break;
+    const durationMs = interval.endEpoch - interval.startEpoch;
+    const usedMs = Math.min(durationMs, remainingMs);
+    if (usedMs > 0) capped.push({ startEpoch: interval.startEpoch, endEpoch: interval.startEpoch + usedMs });
+    remainingMs -= usedMs;
+  }
+
+  return capped;
 };
 
 const formatHMS = (s: number) => {
@@ -59,9 +125,8 @@ const formatHMS = (s: number) => {
 const formatHours = (s: number) => `${(s / 3600).toFixed(1)}h`;
 
 const computeElapsed = (s: PersistedSession): number => {
-  const now = Date.now();
-  const paused = s.accumulatedPausedMs + (s.pausedSince ? now - s.pausedSince : 0);
-  return Math.max(0, Math.floor((now - s.startEpoch - paused) / 1000));
+  const activeMs = getActiveIntervals(s).reduce((total, interval) => total + interval.endEpoch - interval.startEpoch, 0);
+  return Math.min(s.targetSec, Math.max(0, Math.floor(activeMs / 1000)));
 };
 
 export default function FocusPage() {
@@ -128,8 +193,11 @@ export default function FocusPage() {
       blockType: type,
       targetSec: mins * 60,
       startEpoch: Date.now(),
+      startDateKey: getLocalDateKey(),
       pausedSince: null,
       accumulatedPausedMs: 0,
+      pauseSegments: [],
+      completedAtEpoch: null,
       notes: '',
       notionUrl: '',
     });
@@ -140,7 +208,13 @@ export default function FocusPage() {
       if (!s) return s;
       if (s.pausedSince) {
         // resume
-        return { ...s, accumulatedPausedMs: s.accumulatedPausedMs + (Date.now() - s.pausedSince), pausedSince: null };
+        const now = Date.now();
+        return {
+          ...s,
+          accumulatedPausedMs: s.accumulatedPausedMs + (now - s.pausedSince),
+          pauseSegments: [...(s.pauseSegments ?? []), { startEpoch: s.pausedSince, endEpoch: now }],
+          pausedSince: null,
+        };
       }
       return { ...s, pausedSince: Date.now() };
     });
@@ -148,7 +222,7 @@ export default function FocusPage() {
 
   const reset = () => {
     completedFiredRef.current = false;
-    setSession(s => s ? { ...s, startEpoch: Date.now(), pausedSince: null, accumulatedPausedMs: 0 } : s);
+    setSession(s => s ? { ...s, startEpoch: Date.now(), startDateKey: getLocalDateKey(), pausedSince: null, accumulatedPausedMs: 0, pauseSegments: [], completedAtEpoch: null } : s);
     setElapsedSec(0);
   };
 
@@ -167,24 +241,37 @@ export default function FocusPage() {
       return;
     }
     const block = BLOCK_BY_TYPE[session.blockType];
+    const saveEpoch = Date.now();
     const completed = elapsedSec >= session.targetSec;
-    const { error } = await supabase.from('focus_sessions').insert({
-      user_id: user.id,
-      block_type: session.blockType,
-      block_label: block.label,
-      target_seconds: session.targetSec,
-      duration_seconds: elapsedSec,
-      started_at: new Date(session.startEpoch).toISOString(),
-      ended_at: new Date().toISOString(),
-      completed,
-      notes: session.notes || null,
-      notion_note_url: session.notionUrl || null,
-    });
+    const dailySegments = getActiveIntervals(session, saveEpoch).flatMap(interval =>
+      splitIntervalByLocalDay(interval.startEpoch, interval.endEpoch)
+    );
+    const totalSegmentSeconds = dailySegments.reduce((sum, segment) => sum + segment.durationSec, 0);
+
+    if (totalSegmentSeconds < 30) {
+      toast.error('Sessão muito curta para registrar (mín. 30s).');
+      return;
+    }
+
+    const { error } = await supabase.from('focus_sessions').insert(
+      dailySegments.map((segment, index) => ({
+        user_id: user.id,
+        block_type: session.blockType,
+        block_label: block.label,
+        target_seconds: dailySegments.length === 1 ? session.targetSec : segment.durationSec,
+        duration_seconds: segment.durationSec,
+        started_at: segment.startedAt.toISOString(),
+        ended_at: segment.endedAt.toISOString(),
+        completed: dailySegments.length === 1 ? completed : true,
+        notes: index === dailySegments.length - 1 ? session.notes || null : null,
+        notion_note_url: index === dailySegments.length - 1 ? session.notionUrl || null : null,
+      }))
+    );
     if (error) {
       toast.error('Erro ao salvar: ' + error.message);
       return;
     }
-    toast.success(`+${Math.round(elapsedSec / 60)}min registrados em ${block.label}`);
+    toast.success(`+${Math.round(totalSegmentSeconds / 60)}min registrados em ${block.label}`);
     qc.invalidateQueries({ queryKey: ['focus_sessions'] });
     abandon();
   };
@@ -327,7 +414,7 @@ export default function FocusPage() {
     });
 
     // Sessions table
-    const afterY = (doc as any).lastAutoTable.finalY + 10;
+    const afterY = ((doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 82) + 10;
     doc.setFontSize(12);
     doc.setTextColor(20, 20, 20);
     doc.text('Histórico de Sessões', 14, afterY);
@@ -761,7 +848,7 @@ export default function FocusPage() {
   );
 }
 
-function StatTile({ icon: Icon, label, value, hue }: { icon: any; label: string; value: string; hue: string }) {
+function StatTile({ icon: Icon, label, value, hue }: { icon: LucideIcon; label: string; value: string; hue: string }) {
   return (
     <div className="bg-card border border-border rounded-xl p-3.5">
       <div
