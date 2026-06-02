@@ -149,6 +149,7 @@ export default function FocusPage() {
   const [manualNotes, setManualNotes] = useState('');
   const [manualUrl, setManualUrl] = useState('');
   const [manualSaving, setManualSaving] = useState(false);
+  const [sessionSaving, setSessionSaving] = useState(false);
   const completedFiredRef = useRef(false);
 
   // Persist on every session change
@@ -236,20 +237,27 @@ export default function FocusPage() {
   const updateNotionUrl = (notionUrl: string) => setSession(s => s ? { ...s, notionUrl } : s);
 
   const saveSession = async () => {
-    if (!user || !session || elapsedSec < 30) {
-      toast.error('Sessão muito curta para registrar (mín. 30s).');
+    if (!user || !session || sessionSaving) return;
+
+    const saveEpoch = Date.now();
+    const elapsedNow = computeElapsed(session);
+
+    if (elapsedNow < 1) {
+      toast.error('Sessão muito curta para registrar.');
       return;
     }
+
+    setSessionSaving(true);
     const block = BLOCK_BY_TYPE[session.blockType];
-    const saveEpoch = Date.now();
-    const completed = elapsedSec >= session.targetSec;
+    const completed = elapsedNow >= session.targetSec;
     const dailySegments = getActiveIntervals(session, saveEpoch).flatMap(interval =>
       splitIntervalByLocalDay(interval.startEpoch, interval.endEpoch)
     );
     const totalSegmentSeconds = dailySegments.reduce((sum, segment) => sum + segment.durationSec, 0);
 
-    if (totalSegmentSeconds < 30) {
-      toast.error('Sessão muito curta para registrar (mín. 30s).');
+    if (totalSegmentSeconds < 1) {
+      setSessionSaving(false);
+      toast.error('Sessão muito curta para registrar.');
       return;
     }
 
@@ -268,11 +276,13 @@ export default function FocusPage() {
       }))
     );
     if (error) {
+      setSessionSaving(false);
       toast.error('Erro ao salvar: ' + error.message);
       return;
     }
     toast.success(`+${Math.round(totalSegmentSeconds / 60)}min registrados em ${block.label}`);
     qc.invalidateQueries({ queryKey: ['focus_sessions'] });
+    setSessionSaving(false);
     abandon();
   };
 
