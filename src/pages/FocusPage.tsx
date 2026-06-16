@@ -908,3 +908,34 @@ function StatTile({ icon: Icon, label, value, hue }: { icon: LucideIcon; label: 
     </div>
   );
 }
+
+function MediaPicker({ value, onChange }: { value: MediaType | null; onChange: (m: MediaType | null) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {MEDIA_OPTIONS.map(m => {
+        const active = value === m.type;
+        return (
+          <button
+            key={m.type}
+            type="button"
+            onClick={() => onChange(active ? null : m.type)}
+            className={cn(
+              'group flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition',
+              active
+                ? 'border-primary bg-primary/10 shadow-[0_0_18px_-6px_hsl(var(--primary)/0.6)]'
+                : 'border-border hover:border-primary/40 bg-background'
+            )}
+            title={m.label}
+          >
+            <span className="w-6 h-6 rounded-md bg-white flex items-center justify-center overflow-hidden shrink-0">
+              <img src={m.logo} alt={m.label} width={24} height={24} loading="lazy" className="w-5 h-5 object-contain" />
+            </span>
+            <span className={cn('text-xs font-medium', active ? 'text-foreground' : 'text-muted-foreground')}>
+              {m.label}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
