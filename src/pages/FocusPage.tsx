@@ -625,6 +625,13 @@ export default function FocusPage() {
 
               <div className="space-y-2 pt-4 border-t border-border/60">
                 <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">
+                  Mídia (de onde veio o conteúdo)
+                </label>
+                <MediaPicker value={session.media} onChange={updateMedia} />
+              </div>
+
+              <div className="space-y-2 pt-4 border-t border-border/60">
+                <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">
                   Nota do estudo (regra APEX nº 2)
                 </label>
                 <textarea
