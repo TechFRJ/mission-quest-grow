@@ -298,6 +298,7 @@ export default function FocusPage() {
         completed: dailySegments.length === 1 ? completed : true,
         notes: index === dailySegments.length - 1 ? session.notes || null : null,
         notion_note_url: index === dailySegments.length - 1 ? session.notionUrl || null : null,
+        media: session.media ?? null,
       }))
     );
     if (error) {
