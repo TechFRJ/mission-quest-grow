@@ -335,6 +335,7 @@ export default function FocusPage() {
       completed: true,
       notes: manualNotes || null,
       notion_note_url: manualUrl || null,
+      media: manualMedia ?? null,
     });
     setManualSaving(false);
     if (error) {
@@ -347,6 +348,7 @@ export default function FocusPage() {
     setManualOpen(false);
     setManualNotes('');
     setManualUrl('');
+    setManualMedia(null);
     setManualMinutes(60);
   };
 
