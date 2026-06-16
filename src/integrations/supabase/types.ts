@@ -210,6 +210,7 @@ export type Database = {
           duration_seconds: number
           ended_at: string | null
           id: string
+          media: string | null
           notes: string | null
           notion_note_url: string | null
           started_at: string
@@ -224,6 +225,7 @@ export type Database = {
           duration_seconds?: number
           ended_at?: string | null
           id?: string
+          media?: string | null
           notes?: string | null
           notion_note_url?: string | null
           started_at?: string
@@ -238,6 +240,7 @@ export type Database = {
           duration_seconds?: number
           ended_at?: string | null
           id?: string
+          media?: string | null
           notes?: string | null
           notion_note_url?: string | null
           started_at?: string

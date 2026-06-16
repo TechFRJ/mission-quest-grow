@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Play, Pause, Square, RotateCcw, Brain, Code2, Globe2,
   Languages, BookOpen, Crosshair, Flame, Clock, TrendingUp,
-  CheckCircle2, X, FileDown, PlusCircle, type LucideIcon,
+  CheckCircle2, X, FileDown, PlusCircle, Briefcase, type LucideIcon,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -12,9 +12,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import logoB7Web from '@/assets/media-b7web.png';
+import logoAlura from '@/assets/media-alura.png';
+import logoAsimov from '@/assets/media-asimov.png';
+import logoYoutube from '@/assets/media-youtube.png';
+import logoGoogle from '@/assets/media-google.png';
 
 // ---------- APEX blocks (Fase 1) ----------
-type BlockType = 'faculdade' | 'python' | 'web' | 'ingles' | 'leitura' | 'livre';
+type BlockType = 'faculdade' | 'python' | 'web' | 'ingles' | 'leitura' | 'trabalho' | 'livre';
 
 const APEX_BLOCKS: {
   type: BlockType;
@@ -29,10 +34,24 @@ const APEX_BLOCKS: {
   { type: 'web',       label: 'Desenvolvimento Web',  desc: 'Bloco 3 · B7Web · HTML/CSS/JS',         minutes: 90, icon: Globe2,    hue: '199 89% 55%' },
   { type: 'ingles',    label: 'Inglês (Imersão)',     desc: 'Bloco 4 · 30 min diários',              minutes: 30, icon: Languages, hue: '38 92% 55%'  },
   { type: 'leitura',   label: 'Leitura Estratégica',  desc: 'Bloco 5 · 20 min antes de dormir',      minutes: 20, icon: BookOpen,  hue: '340 82% 60%' },
+  { type: 'trabalho',  label: 'Trabalho',             desc: 'Sessão de execução / projetos',         minutes: 60, icon: Briefcase, hue: '14 88% 58%'  },
   { type: 'livre',     label: 'Foco Livre',           desc: 'Sessão customizada',                    minutes: 25, icon: Crosshair, hue: '0 0% 70%'    },
 ];
 
 const BLOCK_BY_TYPE = Object.fromEntries(APEX_BLOCKS.map(b => [b.type, b])) as Record<BlockType, typeof APEX_BLOCKS[number]>;
+
+// ---------- Media sources ----------
+export type MediaType = 'b7web' | 'alura' | 'asimov' | 'youtube' | 'google';
+
+const MEDIA_OPTIONS: { type: MediaType; label: string; logo: string }[] = [
+  { type: 'b7web',   label: 'B7Web',          logo: logoB7Web },
+  { type: 'alura',   label: 'Alura',          logo: logoAlura },
+  { type: 'asimov',  label: 'Asimov Academy', logo: logoAsimov },
+  { type: 'youtube', label: 'YouTube',        logo: logoYoutube },
+  { type: 'google',  label: 'Google',         logo: logoGoogle },
+];
+
+const MEDIA_BY_TYPE = Object.fromEntries(MEDIA_OPTIONS.map(m => [m.type, m])) as Record<MediaType, typeof MEDIA_OPTIONS[number]>;
 
 const STORAGE_KEY = 'apex_focus_session_v1';
 
@@ -47,6 +66,7 @@ type PersistedSession = {
   completedAtEpoch?: number | null;
   notes: string;
   notionUrl: string;
+  media: MediaType | null;
 };
 
 const getLocalDateKey = (date = new Date()) => {
@@ -148,6 +168,7 @@ export default function FocusPage() {
   const [manualMinutes, setManualMinutes] = useState(60);
   const [manualNotes, setManualNotes] = useState('');
   const [manualUrl, setManualUrl] = useState('');
+  const [manualMedia, setManualMedia] = useState<MediaType | null>(null);
   const [manualSaving, setManualSaving] = useState(false);
   const [sessionSaving, setSessionSaving] = useState(false);
   const completedFiredRef = useRef(false);
@@ -186,7 +207,7 @@ export default function FocusPage() {
     return () => document.removeEventListener('visibilitychange', onVis);
   }, [session]);
 
-  const startBlock = (type: BlockType, overrideMin?: number) => {
+  const startBlock = (type: BlockType, overrideMin?: number, media: MediaType | null = null) => {
     const block = BLOCK_BY_TYPE[type];
     const mins = overrideMin ?? block.minutes;
     completedFiredRef.current = false;
@@ -201,8 +222,12 @@ export default function FocusPage() {
       completedAtEpoch: null,
       notes: '',
       notionUrl: '',
+      media,
     });
   };
+
+  const updateMedia = (media: MediaType | null) =>
+    setSession(s => (s ? { ...s, media } : s));
 
   const togglePause = () => {
     setSession(s => {
@@ -273,6 +298,7 @@ export default function FocusPage() {
         completed: dailySegments.length === 1 ? completed : true,
         notes: index === dailySegments.length - 1 ? session.notes || null : null,
         notion_note_url: index === dailySegments.length - 1 ? session.notionUrl || null : null,
+        media: session.media ?? null,
       }))
     );
     if (error) {
@@ -309,6 +335,7 @@ export default function FocusPage() {
       completed: true,
       notes: manualNotes || null,
       notion_note_url: manualUrl || null,
+      media: manualMedia ?? null,
     });
     setManualSaving(false);
     if (error) {
@@ -321,6 +348,7 @@ export default function FocusPage() {
     setManualOpen(false);
     setManualNotes('');
     setManualUrl('');
+    setManualMedia(null);
     setManualMinutes(60);
   };
 
@@ -597,6 +625,13 @@ export default function FocusPage() {
 
               <div className="space-y-2 pt-4 border-t border-border/60">
                 <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">
+                  Mídia (de onde veio o conteúdo)
+                </label>
+                <MediaPicker value={session.media} onChange={updateMedia} />
+              </div>
+
+              <div className="space-y-2 pt-4 border-t border-border/60">
+                <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">
                   Nota do estudo (regra APEX nº 2)
                 </label>
                 <textarea
@@ -723,6 +758,7 @@ export default function FocusPage() {
                 <div className="bg-card border border-border rounded-xl divide-y divide-border">
                   {sessions.slice(0, 8).map(s => {
                     const meta = BLOCK_BY_TYPE[s.block_type as BlockType] ?? BLOCK_BY_TYPE.livre;
+                    const mediaMeta = s.media ? MEDIA_BY_TYPE[s.media as MediaType] : null;
                     const d = new Date(s.started_at);
                     return (
                       <div key={s.id} className="flex items-center gap-3 p-3">
@@ -734,8 +770,14 @@ export default function FocusPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{s.block_label ?? meta.label}</p>
-                          <p className="text-[11px] text-muted-foreground font-mono">
+                          <p className="text-[11px] text-muted-foreground font-mono flex items-center gap-1.5">
                             {d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            {mediaMeta && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-background border border-border">
+                                <img src={mediaMeta.logo} alt={mediaMeta.label} width={12} height={12} loading="lazy" className="w-3 h-3 object-contain" />
+                                <span className="text-[10px]">{mediaMeta.label}</span>
+                              </span>
+                            )}
                           </p>
                         </div>
                         <div className="text-right shrink-0">
@@ -821,6 +863,13 @@ export default function FocusPage() {
             </div>
 
             <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Mídia (opcional)</label>
+              <MediaPicker value={manualMedia} onChange={setManualMedia} />
+            </div>
+
+
+
+            <div className="space-y-1.5">
               <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Nota (opcional)</label>
               <textarea
                 value={manualNotes}
@@ -870,6 +919,37 @@ function StatTile({ icon: Icon, label, value, hue }: { icon: LucideIcon; label: 
       </div>
       <p className="text-lg font-bold font-mono tracking-tight">{value}</p>
       <p className="text-[11px] text-muted-foreground mt-0.5">{label}</p>
+    </div>
+  );
+}
+
+function MediaPicker({ value, onChange }: { value: MediaType | null; onChange: (m: MediaType | null) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {MEDIA_OPTIONS.map(m => {
+        const active = value === m.type;
+        return (
+          <button
+            key={m.type}
+            type="button"
+            onClick={() => onChange(active ? null : m.type)}
+            className={cn(
+              'group flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition',
+              active
+                ? 'border-primary bg-primary/10 shadow-[0_0_18px_-6px_hsl(var(--primary)/0.6)]'
+                : 'border-border hover:border-primary/40 bg-background'
+            )}
+            title={m.label}
+          >
+            <span className="w-6 h-6 rounded-md bg-white flex items-center justify-center overflow-hidden shrink-0">
+              <img src={m.logo} alt={m.label} width={24} height={24} loading="lazy" className="w-5 h-5 object-contain" />
+            </span>
+            <span className={cn('text-xs font-medium', active ? 'text-foreground' : 'text-muted-foreground')}>
+              {m.label}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
