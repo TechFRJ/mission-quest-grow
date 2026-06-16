@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Play, Pause, Square, RotateCcw, Brain, Code2, Globe2,
   Languages, BookOpen, Crosshair, Flame, Clock, TrendingUp,
-  CheckCircle2, X, FileDown, PlusCircle, type LucideIcon,
+  CheckCircle2, X, FileDown, PlusCircle, Briefcase, type LucideIcon,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -12,9 +12,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import logoB7Web from '@/assets/media-b7web.png';
+import logoAlura from '@/assets/media-alura.png';
+import logoAsimov from '@/assets/media-asimov.png';
+import logoYoutube from '@/assets/media-youtube.png';
+import logoGoogle from '@/assets/media-google.png';
 
 // ---------- APEX blocks (Fase 1) ----------
-type BlockType = 'faculdade' | 'python' | 'web' | 'ingles' | 'leitura' | 'livre';
+type BlockType = 'faculdade' | 'python' | 'web' | 'ingles' | 'leitura' | 'trabalho' | 'livre';
 
 const APEX_BLOCKS: {
   type: BlockType;
@@ -29,10 +34,24 @@ const APEX_BLOCKS: {
   { type: 'web',       label: 'Desenvolvimento Web',  desc: 'Bloco 3 · B7Web · HTML/CSS/JS',         minutes: 90, icon: Globe2,    hue: '199 89% 55%' },
   { type: 'ingles',    label: 'Inglês (Imersão)',     desc: 'Bloco 4 · 30 min diários',              minutes: 30, icon: Languages, hue: '38 92% 55%'  },
   { type: 'leitura',   label: 'Leitura Estratégica',  desc: 'Bloco 5 · 20 min antes de dormir',      minutes: 20, icon: BookOpen,  hue: '340 82% 60%' },
+  { type: 'trabalho',  label: 'Trabalho',             desc: 'Sessão de execução / projetos',         minutes: 60, icon: Briefcase, hue: '14 88% 58%'  },
   { type: 'livre',     label: 'Foco Livre',           desc: 'Sessão customizada',                    minutes: 25, icon: Crosshair, hue: '0 0% 70%'    },
 ];
 
 const BLOCK_BY_TYPE = Object.fromEntries(APEX_BLOCKS.map(b => [b.type, b])) as Record<BlockType, typeof APEX_BLOCKS[number]>;
+
+// ---------- Media sources ----------
+export type MediaType = 'b7web' | 'alura' | 'asimov' | 'youtube' | 'google';
+
+const MEDIA_OPTIONS: { type: MediaType; label: string; logo: string }[] = [
+  { type: 'b7web',   label: 'B7Web',          logo: logoB7Web },
+  { type: 'alura',   label: 'Alura',          logo: logoAlura },
+  { type: 'asimov',  label: 'Asimov Academy', logo: logoAsimov },
+  { type: 'youtube', label: 'YouTube',        logo: logoYoutube },
+  { type: 'google',  label: 'Google',         logo: logoGoogle },
+];
+
+const MEDIA_BY_TYPE = Object.fromEntries(MEDIA_OPTIONS.map(m => [m.type, m])) as Record<MediaType, typeof MEDIA_OPTIONS[number]>;
 
 const STORAGE_KEY = 'apex_focus_session_v1';
 
