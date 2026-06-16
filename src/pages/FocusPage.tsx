@@ -168,6 +168,7 @@ export default function FocusPage() {
   const [manualMinutes, setManualMinutes] = useState(60);
   const [manualNotes, setManualNotes] = useState('');
   const [manualUrl, setManualUrl] = useState('');
+  const [manualMedia, setManualMedia] = useState<MediaType | null>(null);
   const [manualSaving, setManualSaving] = useState(false);
   const [sessionSaving, setSessionSaving] = useState(false);
   const completedFiredRef = useRef(false);
