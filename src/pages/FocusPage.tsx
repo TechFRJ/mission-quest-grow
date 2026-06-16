@@ -207,7 +207,7 @@ export default function FocusPage() {
     return () => document.removeEventListener('visibilitychange', onVis);
   }, [session]);
 
-  const startBlock = (type: BlockType, overrideMin?: number) => {
+  const startBlock = (type: BlockType, overrideMin?: number, media: MediaType | null = null) => {
     const block = BLOCK_BY_TYPE[type];
     const mins = overrideMin ?? block.minutes;
     completedFiredRef.current = false;
@@ -222,8 +222,12 @@ export default function FocusPage() {
       completedAtEpoch: null,
       notes: '',
       notionUrl: '',
+      media,
     });
   };
+
+  const updateMedia = (media: MediaType | null) =>
+    setSession(s => (s ? { ...s, media } : s));
 
   const togglePause = () => {
     setSession(s => {
