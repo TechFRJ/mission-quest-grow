@@ -66,6 +66,7 @@ type PersistedSession = {
   completedAtEpoch?: number | null;
   notes: string;
   notionUrl: string;
+  media: MediaType | null;
 };
 
 const getLocalDateKey = (date = new Date()) => {
