@@ -758,6 +758,7 @@ export default function FocusPage() {
                 <div className="bg-card border border-border rounded-xl divide-y divide-border">
                   {sessions.slice(0, 8).map(s => {
                     const meta = BLOCK_BY_TYPE[s.block_type as BlockType] ?? BLOCK_BY_TYPE.livre;
+                    const mediaMeta = s.media ? MEDIA_BY_TYPE[s.media as MediaType] : null;
                     const d = new Date(s.started_at);
                     return (
                       <div key={s.id} className="flex items-center gap-3 p-3">
@@ -769,8 +770,14 @@ export default function FocusPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{s.block_label ?? meta.label}</p>
-                          <p className="text-[11px] text-muted-foreground font-mono">
+                          <p className="text-[11px] text-muted-foreground font-mono flex items-center gap-1.5">
                             {d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            {mediaMeta && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-background border border-border">
+                                <img src={mediaMeta.logo} alt={mediaMeta.label} width={12} height={12} loading="lazy" className="w-3 h-3 object-contain" />
+                                <span className="text-[10px]">{mediaMeta.label}</span>
+                              </span>
+                            )}
                           </p>
                         </div>
                         <div className="text-right shrink-0">
