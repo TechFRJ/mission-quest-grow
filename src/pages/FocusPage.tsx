@@ -856,6 +856,13 @@ export default function FocusPage() {
             </div>
 
             <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Mídia (opcional)</label>
+              <MediaPicker value={manualMedia} onChange={setManualMedia} />
+            </div>
+
+
+
+            <div className="space-y-1.5">
               <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">Nota (opcional)</label>
               <textarea
                 value={manualNotes}
