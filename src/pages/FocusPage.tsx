@@ -830,11 +830,18 @@ export default function FocusPage() {
                                 )}
                               </p>
                             </div>
-                            <div className="text-right shrink-0">
+                            <div className="text-right shrink-0 flex flex-col items-end gap-1">
                               <p className={cn('text-sm font-mono font-bold', s.completed ? 'text-success' : 'text-muted-foreground')}>
                                 {formatHMS(s.duration_seconds)}
                               </p>
                               {s.completed && <p className="text-[10px] text-success">completa</p>}
+                              <button
+                                onClick={() => deleteSession(s.id)}
+                                className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition"
+                                title="Remover sessão"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </div>
                         );
