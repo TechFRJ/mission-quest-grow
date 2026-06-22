@@ -617,7 +617,7 @@ export default function FocusPage() {
                 </button>
                 <button
                   onClick={saveSession}
-                  disabled={elapsedSec < 1 || sessionSaving}
+                  disabled={elapsedSec < 60 || sessionSaving}
                   className="w-11 h-11 rounded-xl border border-success/40 text-success hover:bg-success/10 flex items-center justify-center transition disabled:opacity-30 disabled:cursor-not-allowed"
                   title="Salvar sessão"
                 >
