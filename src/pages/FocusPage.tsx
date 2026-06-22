@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Play, Pause, Square, RotateCcw, Brain, Code2, Globe2,
   Languages, BookOpen, Crosshair, Flame, Clock, TrendingUp,
-  CheckCircle2, X, FileDown, PlusCircle, Briefcase, type LucideIcon,
+  CheckCircle2, X, FileDown, PlusCircle, Briefcase, Trash2, type LucideIcon,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -261,6 +261,18 @@ export default function FocusPage() {
 
   const updateNotes = (notes: string) => setSession(s => s ? { ...s, notes } : s);
   const updateNotionUrl = (notionUrl: string) => setSession(s => s ? { ...s, notionUrl } : s);
+
+  const deleteSession = async (id: string) => {
+    if (!user) return;
+    if (!window.confirm('Remover esta sessão do histórico?')) return;
+    const { error } = await supabase.from('focus_sessions').delete().eq('id', id);
+    if (error) {
+      toast.error('Erro ao remover: ' + error.message);
+      return;
+    }
+    toast.success('Sessão removida.');
+    qc.invalidateQueries({ queryKey: ['focus_sessions'] });
+  };
 
   const saveSession = async () => {
     if (!user || !session || sessionSaving) return;
@@ -818,11 +830,18 @@ export default function FocusPage() {
                                 )}
                               </p>
                             </div>
-                            <div className="text-right shrink-0">
+                            <div className="text-right shrink-0 flex flex-col items-end gap-1">
                               <p className={cn('text-sm font-mono font-bold', s.completed ? 'text-success' : 'text-muted-foreground')}>
                                 {formatHMS(s.duration_seconds)}
                               </p>
                               {s.completed && <p className="text-[10px] text-success">completa</p>}
+                              <button
+                                onClick={() => deleteSession(s.id)}
+                                className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition"
+                                title="Remover sessão"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </div>
                         );
