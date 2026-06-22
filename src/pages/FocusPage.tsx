@@ -171,6 +171,7 @@ export default function FocusPage() {
   const [manualMedia, setManualMedia] = useState<MediaType | null>(null);
   const [manualSaving, setManualSaving] = useState(false);
   const [sessionSaving, setSessionSaving] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<'week' | 'all'>('week');
   const completedFiredRef = useRef(false);
 
   // Persist on every session change
@@ -267,8 +268,9 @@ export default function FocusPage() {
     const saveEpoch = Date.now();
     const elapsedNow = computeElapsed(session);
 
-    if (elapsedNow < 1) {
-      toast.error('Sessão muito curta para registrar.');
+    if (elapsedNow < 60) {
+      toast.error('Sessão precisa ter pelo menos 1 minuto para registrar.');
+      abandon();
       return;
     }
 
@@ -280,9 +282,10 @@ export default function FocusPage() {
     );
     const totalSegmentSeconds = dailySegments.reduce((sum, segment) => sum + segment.durationSec, 0);
 
-    if (totalSegmentSeconds < 1) {
+    if (totalSegmentSeconds < 60) {
       setSessionSaving(false);
-      toast.error('Sessão muito curta para registrar.');
+      toast.error('Sessão precisa ter pelo menos 1 minuto para registrar.');
+      abandon();
       return;
     }
 
@@ -615,7 +618,7 @@ export default function FocusPage() {
                 </button>
                 <button
                   onClick={saveSession}
-                  disabled={elapsedSec < 1 || sessionSaving}
+                  disabled={elapsedSec < 60 || sessionSaving}
                   className="w-11 h-11 rounded-xl border border-success/40 text-success hover:bg-success/10 flex items-center justify-center transition disabled:opacity-30 disabled:cursor-not-allowed"
                   title="Salvar sessão"
                 >
@@ -752,46 +755,83 @@ export default function FocusPage() {
               </div>
             </section>
 
-            {sessions.length > 0 && (
-              <section>
-                <h2 className="text-base font-semibold mb-3">Histórico recente</h2>
-                <div className="bg-card border border-border rounded-xl divide-y divide-border">
-                  {sessions.slice(0, 8).map(s => {
-                    const meta = BLOCK_BY_TYPE[s.block_type as BlockType] ?? BLOCK_BY_TYPE.livre;
-                    const mediaMeta = s.media ? MEDIA_BY_TYPE[s.media as MediaType] : null;
-                    const d = new Date(s.started_at);
-                    return (
-                      <div key={s.id} className="flex items-center gap-3 p-3">
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                          style={{ background: `hsl(${meta.hue} / 0.15)`, color: `hsl(${meta.hue})` }}
-                        >
-                          <meta.icon className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{s.block_label ?? meta.label}</p>
-                          <p className="text-[11px] text-muted-foreground font-mono flex items-center gap-1.5">
-                            {d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                            {mediaMeta && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-background border border-border">
-                                <img src={mediaMeta.logo} alt={mediaMeta.label} width={12} height={12} loading="lazy" className="w-3 h-3 object-contain" />
-                                <span className="text-[10px]">{mediaMeta.label}</span>
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className={cn('text-sm font-mono font-bold', s.completed ? 'text-success' : 'text-muted-foreground')}>
-                            {formatHMS(s.duration_seconds)}
-                          </p>
-                          {s.completed && <p className="text-[10px] text-success">completa</p>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
+            {sessions.length > 0 && (() => {
+              const startOfWeek = new Date();
+              startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+              startOfWeek.setHours(0, 0, 0, 0);
+              const filtered = historyFilter === 'week'
+                ? sessions.filter(s => new Date(s.started_at) >= startOfWeek)
+                : sessions;
+              return (
+                <section>
+                  <div className="flex items-center justify-between mb-3 gap-2">
+                    <h2 className="text-base font-semibold">Histórico recente</h2>
+                    <div className="inline-flex rounded-lg border border-border bg-card p-0.5 text-[11px] font-mono">
+                      <button
+                        onClick={() => setHistoryFilter('week')}
+                        className={cn(
+                          'px-2.5 py-1 rounded-md transition',
+                          historyFilter === 'week' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        Esta semana
+                      </button>
+                      <button
+                        onClick={() => setHistoryFilter('all')}
+                        className={cn(
+                          'px-2.5 py-1 rounded-md transition',
+                          historyFilter === 'all' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        Tudo
+                      </button>
+                    </div>
+                  </div>
+                  {filtered.length === 0 ? (
+                    <div className="bg-card border border-border rounded-xl p-6 text-center">
+                      <p className="text-sm text-muted-foreground">Nenhuma sessão registrada esta semana ainda.</p>
+                      <p className="text-[11px] text-muted-foreground/70 mt-1 font-mono">Comece um bloco APEX para zerar o contador.</p>
+                    </div>
+                  ) : (
+                    <div className="bg-card border border-border rounded-xl divide-y divide-border">
+                      {filtered.slice(0, 12).map(s => {
+                        const meta = BLOCK_BY_TYPE[s.block_type as BlockType] ?? BLOCK_BY_TYPE.livre;
+                        const mediaMeta = s.media ? MEDIA_BY_TYPE[s.media as MediaType] : null;
+                        const d = new Date(s.started_at);
+                        return (
+                          <div key={s.id} className="flex items-center gap-3 p-3">
+                            <div
+                              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                              style={{ background: `hsl(${meta.hue} / 0.15)`, color: `hsl(${meta.hue})` }}
+                            >
+                              <meta.icon className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{s.block_label ?? meta.label}</p>
+                              <p className="text-[11px] text-muted-foreground font-mono flex items-center gap-1.5">
+                                {d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                {mediaMeta && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-background border border-border">
+                                    <img src={mediaMeta.logo} alt={mediaMeta.label} width={12} height={12} loading="lazy" className="w-3 h-3 object-contain" />
+                                    <span className="text-[10px]">{mediaMeta.label}</span>
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className={cn('text-sm font-mono font-bold', s.completed ? 'text-success' : 'text-muted-foreground')}>
+                                {formatHMS(s.duration_seconds)}
+                              </p>
+                              {s.completed && <p className="text-[10px] text-success">completa</p>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+              );
+            })()}
           </>
         )}
       </main>
