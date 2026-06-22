@@ -267,8 +267,9 @@ export default function FocusPage() {
     const saveEpoch = Date.now();
     const elapsedNow = computeElapsed(session);
 
-    if (elapsedNow < 1) {
-      toast.error('Sessão muito curta para registrar.');
+    if (elapsedNow < 60) {
+      toast.error('Sessão precisa ter pelo menos 1 minuto para registrar.');
+      abandon();
       return;
     }
 
@@ -280,9 +281,10 @@ export default function FocusPage() {
     );
     const totalSegmentSeconds = dailySegments.reduce((sum, segment) => sum + segment.durationSec, 0);
 
-    if (totalSegmentSeconds < 1) {
+    if (totalSegmentSeconds < 60) {
       setSessionSaving(false);
-      toast.error('Sessão muito curta para registrar.');
+      toast.error('Sessão precisa ter pelo menos 1 minuto para registrar.');
+      abandon();
       return;
     }
 
