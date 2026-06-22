@@ -262,6 +262,18 @@ export default function FocusPage() {
   const updateNotes = (notes: string) => setSession(s => s ? { ...s, notes } : s);
   const updateNotionUrl = (notionUrl: string) => setSession(s => s ? { ...s, notionUrl } : s);
 
+  const deleteSession = async (id: string) => {
+    if (!user) return;
+    if (!window.confirm('Remover esta sessão do histórico?')) return;
+    const { error } = await supabase.from('focus_sessions').delete().eq('id', id);
+    if (error) {
+      toast.error('Erro ao remover: ' + error.message);
+      return;
+    }
+    toast.success('Sessão removida.');
+    qc.invalidateQueries({ queryKey: ['focus_sessions'] });
+  };
+
   const saveSession = async () => {
     if (!user || !session || sessionSaving) return;
 
