@@ -171,6 +171,7 @@ export default function FocusPage() {
   const [manualMedia, setManualMedia] = useState<MediaType | null>(null);
   const [manualSaving, setManualSaving] = useState(false);
   const [sessionSaving, setSessionSaving] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<'week' | 'all'>('week');
   const completedFiredRef = useRef(false);
 
   // Persist on every session change
